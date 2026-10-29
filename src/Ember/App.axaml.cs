@@ -36,6 +36,7 @@ public partial class App : Application
             var themes = new ThemeService();
             themes.ApplyByName(_settings.Current.Theme);
             Format.UseFahrenheit = _settings.Current.UseFahrenheit;
+            ColumnLayout.Instance.Attach(_settings);
 
             _host = new MonitorHost(new SensorService(), new ProcessService())
             {

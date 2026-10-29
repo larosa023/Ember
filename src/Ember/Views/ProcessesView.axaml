@@ -1,8 +1,12 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Ember.ViewModels"
+             xmlns:c="using:Ember.Controls"
              x:Class="Ember.Views.ProcessesView"
              x:DataType="vm:ProcessesViewModel">
+
+  <!-- Column widths come from ColumnLayout.Instance (shared by header and every row).
+       Header cells are separated by 9px ColumnResizer dividers; rows use Spacing="9" to line up. -->
 
   <DockPanel>
     <StackPanel DockPanel.Dock="Top" Spacing="16" Margin="0,0,0,16">
@@ -23,19 +27,40 @@
     <TextBlock DockPanel.Dock="Bottom" Classes="label" Margin="4,10,0,0"
                TextWrapping="Wrap" Text="{Binding Status}" />
 
-    <Border Classes="card" Padding="0">
+    <Border Classes="card" Padding="0" ClipToBounds="True">
       <DockPanel>
-        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,80,80,100" Margin="22,14,22,8">
-          <Button Grid.Column="0" Classes="header" Content="{Binding NameHeader}"
-                  Command="{Binding SortCommand}" CommandParameter="name" />
-          <Button Grid.Column="1" Classes="header" Content="{Binding PidHeader}" HorizontalAlignment="Right"
-                  Command="{Binding SortCommand}" CommandParameter="pid" />
-          <Button Grid.Column="2" Classes="header" Content="{Binding CpuHeader}" HorizontalAlignment="Right"
-                  Command="{Binding SortCommand}" CommandParameter="cpu" />
-          <Button Grid.Column="3" Classes="header" Content="{Binding MemoryHeader}" HorizontalAlignment="Right"
-                  Command="{Binding SortCommand}" CommandParameter="mem" />
-        </Grid>
-        <Border DockPanel.Dock="Top" Height="1" Background="{DynamicResource Stroke}" Margin="16,0" />
+
+        <!-- Header with draggable dividers -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Height="34" Margin="16,4,0,0">
+          <Button Classes="header" HorizontalContentAlignment="Left" VerticalAlignment="Stretch"
+                  Width="{ReflectionBinding NameWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                  Content="{Binding NameHeader}" Command="{Binding SortCommand}" CommandParameter="name" />
+          <c:ColumnResizer Column="name">
+            <Border Classes="divider" />
+          </c:ColumnResizer>
+
+          <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch"
+                  Width="{ReflectionBinding PidWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                  Content="{Binding PidHeader}" Command="{Binding SortCommand}" CommandParameter="pid" />
+          <c:ColumnResizer Column="pid">
+            <Border Classes="divider" />
+          </c:ColumnResizer>
+
+          <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch"
+                  Width="{ReflectionBinding CpuWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                  Content="{Binding CpuHeader}" Command="{Binding SortCommand}" CommandParameter="cpu" />
+          <c:ColumnResizer Column="cpu">
+            <Border Classes="divider" />
+          </c:ColumnResizer>
+
+          <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch"
+                  Width="{ReflectionBinding MemWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                  Content="{Binding MemoryHeader}" Command="{Binding SortCommand}" CommandParameter="mem" />
+          <c:ColumnResizer Column="mem">
+            <Border Classes="divider" />
+          </c:ColumnResizer>
+        </StackPanel>
+        <Border DockPanel.Dock="Top" Height="1" Background="{DynamicResource Stroke}" />
 
         <ListBox Classes="rows" ItemsSource="{Binding Rows}" SelectedItem="{Binding Selected}">
           <ListBox.KeyBindings>
@@ -54,8 +79,8 @@
 
             <!-- App / process group -->
             <DataTemplate DataType="vm:ProcessGroup" x:DataType="vm:ProcessGroup">
-              <Grid ColumnDefinitions="*,80,80,100">
-                <DockPanel Grid.Column="0">
+              <StackPanel Orientation="Horizontal" Spacing="9">
+                <DockPanel Width="{ReflectionBinding NameWidth, Source={x:Static vm:ColumnLayout.Instance}}">
                   <Panel DockPanel.Dock="Left" Width="22" Margin="0,0,4,0">
                     <Button Classes="chevron" IsVisible="{Binding HasChildren}" Command="{Binding ToggleExpandedCommand}">
                       <TextBlock Classes="icon" FontSize="10" Text="{Binding Chevron}" />
@@ -63,28 +88,40 @@
                   </Panel>
                   <Image DockPanel.Dock="Left" Source="{Binding Icon}" Width="18" Height="18" Margin="0,0,10,0"
                          VerticalAlignment="Center" RenderOptions.BitmapInterpolationMode="HighQuality" />
-                  <TextBlock DockPanel.Dock="Right" Classes="label" Margin="6,0,8,0" VerticalAlignment="Center"
+                  <TextBlock DockPanel.Dock="Right" Classes="label" Margin="6,0,0,0" VerticalAlignment="Center"
                              Text="{Binding CountText}" />
                   <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                 </DockPanel>
-                <TextBlock Grid.Column="1" Classes="label" Text="{Binding PidText}" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                <TextBlock Grid.Column="2" Text="{Binding CpuText}" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                <TextBlock Grid.Column="3" Text="{Binding MemoryText}" HorizontalAlignment="Right" VerticalAlignment="Center" />
-              </Grid>
+                <TextBlock Classes="label" TextAlignment="Right" VerticalAlignment="Center"
+                           Width="{ReflectionBinding PidWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                           Text="{Binding PidText}" />
+                <TextBlock TextAlignment="Right" VerticalAlignment="Center"
+                           Width="{ReflectionBinding CpuWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                           Text="{Binding CpuText}" />
+                <TextBlock TextAlignment="Right" VerticalAlignment="Center"
+                           Width="{ReflectionBinding MemWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                           Text="{Binding MemoryText}" />
+              </StackPanel>
             </DataTemplate>
 
             <!-- Individual process inside an expanded group -->
             <DataTemplate DataType="vm:ProcessRow" x:DataType="vm:ProcessRow">
-              <Grid ColumnDefinitions="*,80,80,100">
-                <DockPanel Grid.Column="0" Margin="54,0,0,0">
-                  <Image DockPanel.Dock="Left" Source="{Binding Icon}" Width="14" Height="14" Margin="0,0,8,0" Opacity="0.8"
+              <StackPanel Orientation="Horizontal" Spacing="9">
+                <DockPanel Width="{ReflectionBinding NameWidth, Source={x:Static vm:ColumnLayout.Instance}}">
+                  <Image DockPanel.Dock="Left" Source="{Binding Icon}" Width="14" Height="14" Margin="54,0,8,0" Opacity="0.8"
                          VerticalAlignment="Center" RenderOptions.BitmapInterpolationMode="HighQuality" />
                   <TextBlock Classes="label" FontSize="13" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                 </DockPanel>
-                <TextBlock Grid.Column="1" Classes="label" Text="{Binding Pid}" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                <TextBlock Grid.Column="2" Classes="label" FontSize="13" Text="{Binding CpuText}" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                <TextBlock Grid.Column="3" Classes="label" FontSize="13" Text="{Binding MemoryText}" HorizontalAlignment="Right" VerticalAlignment="Center" />
-              </Grid>
+                <TextBlock Classes="label" TextAlignment="Right" VerticalAlignment="Center"
+                           Width="{ReflectionBinding PidWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                           Text="{Binding Pid}" />
+                <TextBlock Classes="label" FontSize="13" TextAlignment="Right" VerticalAlignment="Center"
+                           Width="{ReflectionBinding CpuWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                           Text="{Binding CpuText}" />
+                <TextBlock Classes="label" FontSize="13" TextAlignment="Right" VerticalAlignment="Center"
+                           Width="{ReflectionBinding MemWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                           Text="{Binding MemoryText}" />
+              </StackPanel>
             </DataTemplate>
 
           </ListBox.DataTemplates>

@@ -46,6 +46,9 @@ public sealed class AppSettings
 
     /// <summary>GPU name to show on the dashboard; null picks automatically (discrete first).</summary>
     public string? PreferredGpu { get; set; }
+
+    /// <summary>Process list column widths (name, pid, cpu, mem), set by dragging the header dividers.</summary>
+    public Dictionary<string, double> ProcessColumns { get; set; } = new();
 }
 
 /// <summary>A color theme. Built-ins live in ThemeService; users can drop JSON files in %AppData%\Ember\themes.</summary>
