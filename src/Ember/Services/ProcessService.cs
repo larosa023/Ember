@@ -4,17 +4,25 @@ using Ember.Models;
 
 namespace Ember.Services;
 
-/// <summary>Samples running processes, computes per-process CPU %, and resolves exe paths and icons (cached).</summary>
+/// <summary>
+/// Samples running processes: per-process CPU %, memory, exe path, friendly name, icon (cached),
+/// and whether the process owns a visible window (so the UI can split Apps from background work).
+/// </summary>
 public sealed class ProcessService
 {
+    private static readonly string WindowsDir =
+        Environment.GetFolderPath(Environment.SpecialFolder.Windows).TrimEnd('\\') + "\\";
+
     private Dictionary<int, TimeSpan> _lastCpu = new();
     private long _lastTimestamp;
 
-    // Path + icon per PID, remembered with the process name so a reused PID gets looked up again.
-    private readonly Dictionary<int, (string Name, string? Path, IImage? Icon)> _meta = new();
-    private readonly Dictionary<string, IImage?> _iconsByPath = new(StringComparer.OrdinalIgnoreCase);
+    // Per-PID metadata, remembered with the process name so a reused PID gets looked up again.
+    private readonly Dictionary<int, Meta> _meta = new();
+    private readonly Dictionary<string, (IImage? Icon, string? Description)> _byPath = new(StringComparer.OrdinalIgnoreCase);
     private IImage? _genericIcon;
     private bool _genericLoaded;
+
+    private sealed record Meta(string Name, string? Path, IImage? Icon, string? Description, bool IsWindows);
 
     /// <summary>Forget the previous CPU sample (used when the Processes page is hidden).</summary>
     public void Reset()
@@ -29,6 +37,10 @@ public sealed class ProcessService
         var now = Stopwatch.GetTimestamp();
         var elapsedMs = _lastTimestamp == 0 ? 0 : Stopwatch.GetElapsedTime(_lastTimestamp, now).TotalMilliseconds;
         var cores = Environment.ProcessorCount;
+
+        HashSet<int> withWindows;
+        try { withWindows = Native.GetPidsWithWindows(); }
+        catch { withWindows = new HashSet<int>(); }
 
         var processes = Process.GetProcesses();
         var result = new List<ProcessInfo>(processes.Length);
@@ -64,8 +76,9 @@ public sealed class ProcessService
                 }
                 catch { /* protected process: no access without admin */ }
 
-                var (path, icon) = Meta(pid, name);
-                result.Add(new ProcessInfo(pid, name, Math.Clamp(cpu, 0, 100), memory, path, icon));
+                var meta = GetMeta(pid, name);
+                result.Add(new ProcessInfo(pid, name, Math.Clamp(cpu, 0, 100), memory,
+                    meta.Path, meta.Icon, meta.Description, withWindows.Contains(pid), meta.IsWindows));
             }
         }
 
@@ -77,24 +90,38 @@ public sealed class ProcessService
         return result;
     }
 
-    private (string? Path, IImage? Icon) Meta(int pid, string name)
+    private Meta GetMeta(int pid, string name)
     {
-        if (_meta.TryGetValue(pid, out var known) && known.Name == name)
-            return (known.Path, known.Icon);
+        if (_meta.TryGetValue(pid, out var known) && known.Name == name) return known;
 
         string? path = null;
         try { path = Native.GetProcessPath(pid); } catch { }
 
         IImage? icon = null;
-        if (path is not null && !_iconsByPath.TryGetValue(path, out icon))
+        string? description = null;
+        if (path is not null)
         {
-            try { icon = Native.ExtractIcon(path); } catch { icon = null; }
-            _iconsByPath[path] = icon;
+            if (!_byPath.TryGetValue(path, out var cached))
+            {
+                try { cached.Icon = Native.ExtractIcon(path); } catch { }
+                try
+                {
+                    var d = FileVersionInfo.GetVersionInfo(path).FileDescription?.Trim();
+                    cached.Description = string.IsNullOrEmpty(d) ? null : d;
+                }
+                catch { }
+                _byPath[path] = cached;
+            }
+            (icon, description) = cached;
         }
         icon ??= GenericIcon();
 
-        _meta[pid] = (name, path, icon);
-        return (path, icon);
+        // No readable path (System, Registry, protected services) or lives in C:\Windows → Windows process.
+        var isWindows = path is null || path.StartsWith(WindowsDir, StringComparison.OrdinalIgnoreCase);
+
+        var meta = new Meta(name, path, icon, description, isWindows);
+        _meta[pid] = meta;
+        return meta;
     }
 
     private IImage? GenericIcon()

@@ -1,12 +1,20 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Avalonia.Media;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Ember.Models;
 
 namespace Ember.ViewModels;
 
+public enum ProcessCategory { Apps, Background, Windows }
+
+/// <summary>
+/// Task Manager-style process list: sections (Apps / Background / Windows), each holding
+/// groups of processes that share an exe (e.g. all of Chrome), expandable to individual PIDs.
+/// The visible list is one flat collection that is reordered in place every tick.
+/// </summary>
 public partial class ProcessesViewModel : ViewModelBase
 {
     // Ending these can crash or lock up Windows, so Ember refuses.
@@ -16,11 +24,24 @@ public partial class ProcessesViewModel : ViewModelBase
         "Memory Compression", "Secure System", "fontdrvhost", "dwm",
     };
 
-    private readonly Dictionary<int, ProcessRow> _rows = new();
+    private readonly Dictionary<string, ProcessGroup> _groups = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<int, ProcessRow> _children = new();
+    private readonly SectionRow[] _sections;
     private IReadOnlyList<ProcessInfo> _last = Array.Empty<ProcessInfo>();
     private bool _descending = true;
 
-    public ObservableCollection<ProcessRow> Rows { get; } = new();
+    public ProcessesViewModel()
+    {
+        _sections =
+        [
+            new SectionRow(ProcessCategory.Apps, "Apps"),
+            new SectionRow(ProcessCategory.Background, "Background processes"),
+            new SectionRow(ProcessCategory.Windows, "Windows processes") { IsCollapsed = true },
+        ];
+    }
+
+    /// <summary>Mixed rows: SectionRow, ProcessGroup, ProcessRow (expanded children).</summary>
+    public ObservableCollection<object> Rows { get; } = new();
 
     [ObservableProperty] private string _search = "";
     [ObservableProperty] private string _sortKey = "cpu";
@@ -29,7 +50,7 @@ public partial class ProcessesViewModel : ViewModelBase
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(EndTaskCommand), nameof(EndTreeCommand), nameof(OpenLocationCommand))]
-    private ProcessRow? _selected;
+    private object? _selected;
 
     public string NameHeader => Header("name", "Name");
     public string PidHeader => Header("pid", "PID");
@@ -39,7 +60,21 @@ public partial class ProcessesViewModel : ViewModelBase
     private string Header(string key, string label) =>
         SortKey == key ? $"{label} {(_descending ? "↓" : "↑")}" : label;
 
-    partial void OnSearchChanged(string value) => Update(_last);
+    partial void OnSearchChanged(string value) => Refresh();
+
+    partial void OnSelectedChanged(object? value)
+    {
+        // Clicking a section header collapses/expands it instead of selecting it.
+        if (value is SectionRow section)
+        {
+            section.IsCollapsed = !section.IsCollapsed;
+            Dispatcher.UIThread.Post(() =>
+            {
+                Selected = null;
+                Refresh();
+            });
+        }
+    }
 
     [RelayCommand]
     private void Sort(string key)
@@ -55,63 +90,125 @@ public partial class ProcessesViewModel : ViewModelBase
         OnPropertyChanged(nameof(PidHeader));
         OnPropertyChanged(nameof(CpuHeader));
         OnPropertyChanged(nameof(MemoryHeader));
-        Update(_last);
+        Refresh();
     }
+
+    public void Refresh() => Update(_last);
 
     public void Update(IReadOnlyList<ProcessInfo> list)
     {
         _last = list;
         var query = Search.Trim();
-        var seen = new HashSet<int>();
+
+        // 1. Bucket processes by exe (or name when the path is hidden).
+        var buckets = new Dictionary<string, List<ProcessInfo>>(StringComparer.OrdinalIgnoreCase);
         double totalCpu = 0;
         long totalMemory = 0;
-
         foreach (var p in list)
         {
             totalCpu += p.Cpu;
             totalMemory += p.Memory;
+            if (query.Length > 0 && !Matches(p, query)) continue;
 
-            if (query.Length > 0 &&
-                !p.Name.Contains(query, StringComparison.OrdinalIgnoreCase) &&
-                !p.Pid.ToString().Contains(query, StringComparison.Ordinal))
-                continue;
-
-            seen.Add(p.Pid);
-            if (_rows.TryGetValue(p.Pid, out var row)) row.Apply(p);
-            else _rows[p.Pid] = new ProcessRow(p);
+            var key = p.Path ?? "name:" + p.Name;
+            if (!buckets.TryGetValue(key, out var bucket)) buckets[key] = bucket = new List<ProcessInfo>();
+            bucket.Add(p);
         }
 
-        foreach (var pid in _rows.Keys.Where(k => !seen.Contains(k)).ToList())
-            _rows.Remove(pid);
+        // 2. Update or create groups and their child rows (reused so selection survives).
+        var livePids = new HashSet<int>();
+        foreach (var (key, procs) in buckets)
+        {
+            if (!_groups.TryGetValue(key, out var group))
+                _groups[key] = group = new ProcessGroup(key, Refresh);
 
-        Sync(Ordered());
+            var rows = new List<ProcessRow>(procs.Count);
+            foreach (var p in procs)
+            {
+                livePids.Add(p.Pid);
+                if (_children.TryGetValue(p.Pid, out var row) && row.Name == p.Name) row.Apply(p);
+                else _children[p.Pid] = row = new ProcessRow(p);
+                rows.Add(row);
+            }
+            group.Apply(procs, rows);
+        }
 
-        Summary = $"{list.Count} processes · {Math.Min(totalCpu, 100):0}% CPU · {Format.Bytes(totalMemory)} in use";
-        if (Selected is not null && !_rows.ContainsKey(Selected.Pid)) Selected = null;
+        foreach (var key in _groups.Keys.Where(k => !buckets.ContainsKey(k)).ToList()) _groups.Remove(key);
+        foreach (var pid in _children.Keys.Where(k => !livePids.Contains(k)).ToList()) _children.Remove(pid);
+
+        // 3. Build the visible list: section header, its groups, expanded children.
+        var desired = new List<object>(_children.Count + 8);
+        int apps = 0, background = 0, windows = 0;
+        foreach (var section in _sections)
+        {
+            var groups = _groups.Values.Where(g => g.Category == section.Category).ToList();
+            groups.Sort(CompareGroups);
+            section.Count = groups.Count;
+            switch (section.Category)
+            {
+                case ProcessCategory.Apps: apps = groups.Count; break;
+                case ProcessCategory.Background: background = groups.Count; break;
+                default: windows = groups.Count; break;
+            }
+            if (groups.Count == 0) continue;
+
+            desired.Add(section);
+            if (section.IsCollapsed && query.Length == 0) continue;
+
+            foreach (var g in groups)
+            {
+                desired.Add(g);
+                if (g.IsExpanded && g.Count > 1)
+                {
+                    var kids = g.Children.ToList();
+                    kids.Sort(CompareRows);
+                    desired.AddRange(kids);
+                }
+            }
+        }
+
+        Sync(desired);
+
+        Summary = $"{apps} apps · {background} background · {windows} Windows · " +
+                  $"{Math.Min(totalCpu, 100):0}% CPU · {Format.Bytes(totalMemory)} in use";
+
+        if (Selected is not null && Selected is not SectionRow && !desired.Contains(Selected))
+            Selected = null;
     }
 
-    private List<ProcessRow> Ordered()
-    {
-        Comparison<ProcessRow> compare = SortKey switch
-        {
-            "name" => (a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase),
-            "pid" => (a, b) => a.Pid.CompareTo(b.Pid),
-            "mem" => (a, b) => a.Memory.CompareTo(b.Memory),
-            _ => (a, b) => a.Cpu.CompareTo(b.Cpu),
-        };
+    private static bool Matches(ProcessInfo p, string q) =>
+        p.Name.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+        (p.Description?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false) ||
+        p.Pid.ToString().Contains(q, StringComparison.Ordinal);
 
-        var items = _rows.Values.ToList();
-        items.Sort((a, b) =>
+    private int CompareGroups(ProcessGroup a, ProcessGroup b)
+    {
+        int c = SortKey switch
         {
-            var c = compare(a, b);
-            if (_descending) c = -c;
-            return c != 0 ? c : a.Pid.CompareTo(b.Pid);
-        });
-        return items;
+            "name" => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase),
+            "pid" => a.FirstPid.CompareTo(b.FirstPid),
+            "mem" => a.Memory.CompareTo(b.Memory),
+            _ => a.Cpu.CompareTo(b.Cpu),
+        };
+        if (_descending) c = -c;
+        return c != 0 ? c : string.Compare(a.Key, b.Key, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private int CompareRows(ProcessRow a, ProcessRow b)
+    {
+        int c = SortKey switch
+        {
+            "name" => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase),
+            "pid" => a.Pid.CompareTo(b.Pid),
+            "mem" => a.Memory.CompareTo(b.Memory),
+            _ => a.Cpu.CompareTo(b.Cpu),
+        };
+        if (_descending) c = -c;
+        return c != 0 ? c : a.Pid.CompareTo(b.Pid);
     }
 
     /// <summary>Reorders the visible list in place (Move, not Reset) so selection and scroll survive.</summary>
-    private void Sync(List<ProcessRow> desired)
+    private void Sync(List<object> desired)
     {
         for (int i = 0; i < desired.Count; i++)
         {
@@ -123,7 +220,9 @@ public partial class ProcessesViewModel : ViewModelBase
         while (Rows.Count > desired.Count) Rows.RemoveAt(Rows.Count - 1);
     }
 
-    private bool HasSelection() => Selected is not null;
+    // ---------- Actions ----------
+
+    private bool HasSelection() => Selected is ProcessGroup or ProcessRow;
 
     [RelayCommand(CanExecute = nameof(HasSelection))]
     private void EndTask() => Kill(tree: false);
@@ -133,35 +232,55 @@ public partial class ProcessesViewModel : ViewModelBase
 
     private void Kill(bool tree)
     {
-        if (Selected is not { } row) return;
-        if (Protected.Contains(row.Name))
+        var targets = Selected switch
         {
-            Status = $"{row.Name} is a core Windows process. Ending it would crash your PC, so Ember won't.";
+            ProcessGroup g => g.Children.Select(c => (c.Pid, c.Name)).ToList(),
+            ProcessRow r => new List<(int Pid, string Name)> { (r.Pid, r.Name) },
+            _ => new List<(int Pid, string Name)>(),
+        };
+        if (targets.Count == 0) return;
+
+        var label = Selected is ProcessGroup group ? group.Name : targets[0].Name;
+        if (targets.Any(t => Protected.Contains(t.Name)))
+        {
+            Status = $"{label} is a core Windows process. Ending it would crash your PC, so Ember won't.";
             return;
         }
 
-        try
+        int ended = 0;
+        string? error = null;
+        foreach (var (pid, _) in targets)
         {
-            using var p = Process.GetProcessById(row.Pid);
-            p.Kill(tree);
-            Status = $"Ended {row.Name} ({row.Pid}).";
+            try
+            {
+                using var p = Process.GetProcessById(pid);
+                p.Kill(tree);
+                ended++;
+            }
+            catch (ArgumentException) { ended++; }  // already gone (e.g. killed with its parent)
+            catch (Exception ex) { error = ex.Message; }
         }
-        catch (Exception ex)
-        {
-            Status = $"Couldn't end {row.Name}: {ex.Message}";
-        }
+
+        Status = error is null
+            ? targets.Count == 1 ? $"Ended {label} ({targets[0].Pid})." : $"Ended {label} ({ended} processes)."
+            : $"Couldn't end all of {label}: {error}. Try running as admin.";
     }
 
     [RelayCommand(CanExecute = nameof(HasSelection))]
     private void OpenLocation()
     {
-        if (Selected is not { } row) return;
+        string? path;
+        string name;
+        int pid;
+        if (Selected is ProcessGroup g) { path = g.Path; name = g.Name; pid = g.FirstPid; }
+        else if (Selected is ProcessRow r) { path = r.Path; name = r.Name; pid = r.Pid; }
+        else return;
+
         try
         {
-            var path = row.Path;
             if (string.IsNullOrEmpty(path))
             {
-                using var p = Process.GetProcessById(row.Pid);
+                using var p = Process.GetProcessById(pid);
                 path = p.MainModule?.FileName;
             }
             if (string.IsNullOrEmpty(path)) throw new InvalidOperationException("path unavailable");
@@ -169,11 +288,104 @@ public partial class ProcessesViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            Status = $"Couldn't open {row.Name}'s location ({ex.Message}). Try running as admin.";
+            Status = $"Couldn't open {name}'s location ({ex.Message}). Try running as admin.";
         }
     }
 }
 
+/// <summary>Section header row ("Apps (5)"). Clicking it collapses or expands the section.</summary>
+public partial class SectionRow : ObservableObject
+{
+    public SectionRow(ProcessCategory category, string title)
+    {
+        Category = category;
+        Title = title;
+    }
+
+    public ProcessCategory Category { get; }
+    public string Title { get; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Header))]
+    private int _count;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Chevron))]
+    private bool _isCollapsed;
+
+    public string Header => $"{Title} ({Count})";
+    public string Chevron => IsCollapsed ? "" : "";   // right / down
+}
+
+/// <summary>All processes running the same exe, shown as one row (like Task Manager).</summary>
+public partial class ProcessGroup : ObservableObject
+{
+    private readonly Action _refresh;
+
+    public ProcessGroup(string key, Action refresh)
+    {
+        Key = key;
+        _refresh = refresh;
+    }
+
+    public string Key { get; }
+    public List<ProcessRow> Children { get; private set; } = new();
+    public ProcessCategory Category { get; private set; }
+    public string? Path { get; private set; }
+    public int FirstPid { get; private set; }
+    public double Cpu { get; private set; }
+    public long Memory { get; private set; }
+
+    [ObservableProperty] private string _name = "";
+    [ObservableProperty] private IImage? _icon;
+    [ObservableProperty] private string _cpuText = "";
+    [ObservableProperty] private string _memoryText = "";
+    [ObservableProperty] private string _pidText = "";
+    [ObservableProperty] private string _countText = "";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasChildren))]
+    private int _count;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Chevron))]
+    private bool _isExpanded;
+
+    public bool HasChildren => Count > 1;
+    public string Chevron => IsExpanded ? "" : "";
+
+    [RelayCommand]
+    private void ToggleExpanded()
+    {
+        IsExpanded = !IsExpanded;
+        _refresh();
+    }
+
+    public void Apply(List<ProcessInfo> procs, List<ProcessRow> rows)
+    {
+        var first = procs[0];
+        Children = rows;
+        Path = first.Path;
+        FirstPid = procs.Min(p => p.Pid);
+
+        Category = procs.Any(p => p.HasWindow) ? ProcessCategory.Apps
+            : first.IsWindows ? ProcessCategory.Windows
+            : ProcessCategory.Background;
+
+        Name = first.Description ?? first.Name;
+        Icon = first.Icon;
+        Count = procs.Count;
+        CountText = procs.Count > 1 ? $"({procs.Count})" : "";
+        PidText = procs.Count == 1 ? first.Pid.ToString() : "";
+
+        Cpu = Math.Min(procs.Sum(p => p.Cpu), 100);
+        Memory = procs.Sum(p => p.Memory);
+        CpuText = Cpu < 0.05 ? "0%" : $"{Cpu:0.0}%";
+        MemoryText = Format.Bytes(Memory);
+    }
+}
+
+/// <summary>One process (shown when its group is expanded).</summary>
 public partial class ProcessRow : ObservableObject
 {
     public ProcessRow(ProcessInfo info)

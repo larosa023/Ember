@@ -30,7 +30,10 @@ public sealed record HardwareSnapshot(
         Array.Empty<SensorReading>());
 }
 
-public sealed record ProcessInfo(int Pid, string Name, double Cpu, long Memory, string? Path, IImage? Icon);
+public sealed record ProcessInfo(
+    int Pid, string Name, double Cpu, long Memory,
+    string? Path, IImage? Icon, string? Description,
+    bool HasWindow, bool IsWindows);
 
 public sealed class AppSettings
 {

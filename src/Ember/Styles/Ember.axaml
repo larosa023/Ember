@@ -105,6 +105,23 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="Padding" Value="6,0,6,6" />
   </Style>
+  <!-- Small expand/collapse chevron on grouped processes -->
+  <Style Selector="Button.chevron">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Width" Value="22" />
+    <Setter Property="Height" Value="22" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.chevron:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource SurfaceAlt}" />
+    <Setter Property="Foreground" Value="{DynamicResource Text}" />
+  </Style>
+
   <Style Selector="ListBox.rows ListBoxItem">
     <Setter Property="Padding" Value="10,7" />
     <Setter Property="MinHeight" Value="0" />

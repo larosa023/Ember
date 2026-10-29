@@ -39,6 +39,58 @@ internal static class Native
         }
     }
 
+    // ---------- Windows (to tell "apps" from background processes) ----------
+
+    private delegate bool EnumWindowsProc(IntPtr hwnd, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    private static extern bool EnumWindows(EnumWindowsProc callback, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    private static extern bool IsWindowVisible(IntPtr hwnd);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetWindow(IntPtr hwnd, uint cmd);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, EntryPoint = "GetWindowTextLengthW")]
+    private static extern int GetWindowTextLength(IntPtr hwnd);
+
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
+    private static extern IntPtr GetWindowLongPtr(IntPtr hwnd, int index);
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint pid);
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmGetWindowAttribute(IntPtr hwnd, int attribute, out int value, int size);
+
+    /// <summary>
+    /// PIDs that own a real, visible top-level window (what Task Manager calls "Apps"):
+    /// visible, unowned, titled, not a tool window, and not cloaked (hidden UWP frames).
+    /// </summary>
+    public static HashSet<int> GetPidsWithWindows()
+    {
+        var pids = new HashSet<int>();
+        EnumWindows((hwnd, _) =>
+        {
+            if (!IsWindowVisible(hwnd)) return true;
+            if (GetWindow(hwnd, 4 /* GW_OWNER */) != IntPtr.Zero) return true;
+            if (GetWindowTextLength(hwnd) == 0) return true;
+            if (((long)GetWindowLongPtr(hwnd, -20 /* GWL_EXSTYLE */) & 0x80 /* WS_EX_TOOLWINDOW */) != 0) return true;
+            try
+            {
+                if (DwmGetWindowAttribute(hwnd, 14 /* DWMWA_CLOAKED */, out var cloaked, sizeof(int)) == 0 && cloaked != 0)
+                    return true;
+            }
+            catch (DllNotFoundException) { }
+
+            GetWindowThreadProcessId(hwnd, out var pid);
+            if (pid != 0) pids.Add((int)pid);
+            return true;
+        }, IntPtr.Zero);
+        return pids;
+    }
+
     // ---------- Icons ----------
 
     [DllImport("shell32.dll", CharSet = CharSet.Unicode, EntryPoint = "ExtractIconExW")]
