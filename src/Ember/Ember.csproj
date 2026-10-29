@@ -37,7 +37,7 @@
     <PackageReference Include="Velopack" Version="0.0.1298" />
 
     <!-- Avalonia pulls this in for Linux only; pin the patched version (GHSA-xrw6-gwf8-vvr9). -->
-    <PackageReference Include="Tmds.DBus.Protocol" Version="0.21.3" />
+    <PackageReference Include="Tmds.DBus.Protocol" Version="0.95.2" />
   </ItemGroup>
 
 </Project>
