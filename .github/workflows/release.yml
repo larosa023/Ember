@@ -1,13 +1,22 @@
 name: Release
 
-# Push a tag like v0.1.0 and this builds Ember, packages it with Velopack,
-# and publishes a GitHub Release. Installed copies of Ember pick it up automatically.
+# Bump <Version> in src/Ember/Ember.csproj and push to main: this builds Ember, packages it
+# with Velopack and publishes a GitHub Release (tag vX.Y.Z). Installed copies update themselves.
+# Pushes that don't change the version are skipped. You can also run it from the Actions tab.
 on:
   push:
-    tags: ['v*']
+    branches: [main]
+    paths:
+      - 'src/**'
+      - '.github/workflows/release.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 env:
   VPK_VERSION: '0.0.1298'   # keep in sync with the Velopack package in Ember.csproj
@@ -18,37 +27,61 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Read version from tag
+      - name: Read version from Ember.csproj
         id: version
         shell: pwsh
         run: |
-          $v = '${{ github.ref_name }}'.TrimStart('v')
+          $xml = [xml](Get-Content src/Ember/Ember.csproj)
+          $v = ($xml.Project.PropertyGroup | Where-Object { $_.Version } | Select-Object -First 1).Version
+          if (-not $v) { throw "No <Version> in Ember.csproj" }
           "value=$v" >> $env:GITHUB_OUTPUT
+          Write-Host "Version: $v"
+
+      - name: Skip if this version is already released
+        id: check
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "v${{ steps.version.outputs.value }}" --repo "${{ github.repository }}" *> $null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "v${{ steps.version.outputs.value }} already exists. Bump <Version> to publish a new release."
+            "exists=true" >> $env:GITHUB_OUTPUT
+          } else {
+            "exists=false" >> $env:GITHUB_OUTPUT
+          }
+          exit 0
+
+      - uses: actions/setup-dotnet@v4
+        if: steps.check.outputs.exists == 'false'
+        with:
+          dotnet-version: '10.0.x'
 
       - name: Publish
+        if: steps.check.outputs.exists == 'false'
         run: >
           dotnet publish src/Ember/Ember.csproj -c Release -r win-x64 --self-contained true
           -p:Version=${{ steps.version.outputs.value }} -o publish
 
       - name: Install Velopack CLI
+        if: steps.check.outputs.exists == 'false'
         run: dotnet tool install -g vpk --version ${{ env.VPK_VERSION }}
 
       - name: Download previous release (enables small delta updates)
+        if: steps.check.outputs.exists == 'false'
         continue-on-error: true
         run: vpk download github --repoUrl https://github.com/${{ github.repository }} --token ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pack
+        if: steps.check.outputs.exists == 'false'
         run: >
           vpk pack --packId Ember --packTitle Ember --packAuthors "Ember contributors"
           --packVersion ${{ steps.version.outputs.value }}
           --packDir publish --mainExe Ember.exe --icon src/Ember/Assets/ember.ico
 
       - name: Upload to GitHub Releases
+        if: steps.check.outputs.exists == 'false'
         run: >
           vpk upload github --repoUrl https://github.com/${{ github.repository }}
           --publish --releaseName "Ember ${{ steps.version.outputs.value }}"
-          --tag ${{ github.ref_name }} --token ${{ secrets.GITHUB_TOKEN }}
+          --tag v${{ steps.version.outputs.value }} --token ${{ secrets.GITHUB_TOKEN }}

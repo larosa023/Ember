@@ -62,13 +62,11 @@ Or open `Ember.sln` in Visual Studio 2022 or Rider.
 
 ## Releasing a new version
 
-1. Set `RepoUrl` in `src/Ember/AppInfo.cs` to this repo (one-time).
-2. Tag and push:
-   ```powershell
-   git tag v0.1.0
-   git push origin v0.1.0
-   ```
-3. The **Release** workflow builds Ember, packages it with Velopack and publishes a GitHub Release. Installed copies see the update on their next launch.
+1. Bump `<Version>` in `src/Ember/Ember.csproj` (for example `0.1.0` → `0.1.1`).
+2. Commit and push to `main`.
+3. The **Release** workflow builds Ember, packages it with Velopack and publishes a GitHub Release tagged `v0.1.1`. Installed copies see the update on their next launch.
+
+Pushes that don't change the version are skipped, so normal commits don't create releases.
 
 ## Tech stack
 
