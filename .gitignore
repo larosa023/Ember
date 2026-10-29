@@ -1,0 +1,17 @@
+## .NET / Visual Studio / Rider
+bin/
+obj/
+.vs/
+.idea/
+*.user
+*.suo
+*.rsuser
+
+## Build output
+publish/
+Releases/
+artifacts/
+
+## OS
+Thumbs.db
+.DS_Store

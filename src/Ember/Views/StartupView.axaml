@@ -1,0 +1,42 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Ember.ViewModels"
+             x:Class="Ember.Views.StartupView"
+             x:DataType="vm:StartupViewModel">
+
+  <DockPanel>
+    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,16">
+      <Button DockPanel.Dock="Right" VerticalAlignment="Center" Content="Refresh" Command="{Binding RefreshCommand}" />
+      <StackPanel Spacing="2">
+        <TextBlock Classes="h1" Text="Startup apps" />
+        <TextBlock Classes="label" Text="{Binding Status}" TextWrapping="Wrap" />
+      </StackPanel>
+    </DockPanel>
+
+    <ScrollViewer>
+      <ItemsControl ItemsSource="{Binding Items}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Spacing="8" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:StartupRow">
+            <Border Classes="card" Padding="18,12">
+              <DockPanel>
+                <ToggleSwitch DockPanel.Dock="Right" VerticalAlignment="Center"
+                              OnContent="" OffContent="" IsChecked="{Binding IsEnabled}" />
+                <TextBlock DockPanel.Dock="Right" Classes="label" VerticalAlignment="Center" Margin="0,0,20,0"
+                           Text="{Binding Location}" />
+                <StackPanel Spacing="2">
+                  <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                  <TextBlock Classes="label" Text="{Binding Command}" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+              </DockPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+  </DockPanel>
+</UserControl>

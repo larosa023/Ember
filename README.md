@@ -1,0 +1,105 @@
+# 🔥 Ember
+
+**A clean, hyper-lightweight hardware monitor and task manager for Windows.**
+
+Ember shows your CPU, GPU and memory at a glance (usage, temperatures, clocks, power) like NZXT CAM, without the account, the bloat or the background services. It also does the everyday Task Manager jobs: find a process, end it, and control what starts with Windows.
+
+<!-- Add a screenshot once you have one: ![Ember dashboard](docs/screenshot.png) -->
+
+## Features
+
+- **Dashboard**: animated ring gauges and 60-second history graphs for CPU, GPU and RAM, with temps, clocks, power and VRAM
+- **Processes**: live CPU and memory per process, search by name or PID, sort any column, End task / End tree (or press `Delete`), Open file location
+- **Sensors**: every sensor your hardware exposes (temps, fans, voltages, clocks, loads, power) with min and max
+- **Startup apps**: enable or disable apps that launch with Windows, same as Task Manager
+- **Themes**: five built-in themes that switch instantly, plus your own themes as simple JSON files
+- **Built-in updater**: checks GitHub Releases, downloads in the background, installs on restart
+- **Light on resources**: one background sampling loop, process sampling only while that page is open, adjustable refresh rate
+
+## Install
+
+Download `Ember-win-Setup.exe` from the [latest release](../../releases/latest) and run it. Ember installs per-user (no admin needed) and keeps itself up to date.
+
+> **CPU temperatures need admin.** Windows hides some sensors from normal apps. Use **Restart as admin** in the sidebar when you want them.
+
+## Themes
+
+Built-in: **Ember**, **Midnight**, **Aurora**, **Graphite**, **Daylight**.
+
+To make your own, go to **Settings → Open themes folder** (`%AppData%\Ember\themes`), copy `sakura.json`, change the colors, then click **Reload themes**:
+
+```json
+{
+  "Name": "Sakura",
+  "Dark": true,
+  "Background": "#141014",
+  "Surface": "#1C161C",
+  "SurfaceAlt": "#251D25",
+  "Stroke": "#33283A",
+  "Text": "#F7EEF3",
+  "TextMuted": "#9C8A95",
+  "Accent": "#FF7EB6",
+  "OnAccent": "#1A0A12",
+  "Good": "#3DDC97",
+  "Warn": "#FFB020",
+  "Hot": "#FF4D4F"
+}
+```
+
+Any color you leave out falls back to the default.
+
+## Build from source
+
+Requirements: Windows 10/11 and the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
+
+```powershell
+git clone https://github.com/larosa023/Ember
+cd ember
+dotnet run --project src/Ember
+```
+
+Or open `Ember.sln` in Visual Studio 2022 or Rider.
+
+## Releasing a new version
+
+1. Set `RepoUrl` in `src/Ember/AppInfo.cs` to this repo (one-time).
+2. Tag and push:
+   ```powershell
+   git tag v0.1.0
+   git push origin v0.1.0
+   ```
+3. The **Release** workflow builds Ember, packages it with Velopack and publishes a GitHub Release. Installed copies see the update on their next launch.
+
+## Tech stack
+
+| Piece | Used for |
+|---|---|
+| [.NET 10](https://dotnet.microsoft.com) + [Avalonia UI](https://avaloniaui.net) | Fast, GPU-rendered native UI |
+| [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) | Temperatures, fans, clocks, power |
+| [Velopack](https://velopack.io) | Installer and auto-updates via GitHub Releases |
+| [CommunityToolkit.Mvvm](https://github.com/CommunityToolkit/dotnet) | View-models without boilerplate |
+
+## Project layout
+
+```
+src/Ember/
+  Controls/     RingGauge, Sparkline (custom-drawn, cheap to redraw)
+  Models/       Snapshots, settings, theme definition
+  Services/     Sensors, processes, startup apps, themes, settings, updater, monitor loop
+  ViewModels/   One per page
+  Views/        One per page
+  Styles/       Shared styles (cards, nav, gauges)
+```
+
+## Roadmap
+
+- [x] Tray icon with live temps tooltip
+- [ ] Compact always-on-top overlay
+- [ ] Services page
+- [ ] Per-process GPU and disk usage
+- [ ] Fan curves
+- [ ] Temperature alerts
+
+## License
+
+MIT. Ember uses LibreHardwareMonitorLib, which is licensed under MPL-2.0.

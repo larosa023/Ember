@@ -1,0 +1,54 @@
+name: Release
+
+# Push a tag like v0.1.0 and this builds Ember, packages it with Velopack,
+# and publishes a GitHub Release. Installed copies of Ember pick it up automatically.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+env:
+  VPK_VERSION: '0.0.1298'   # keep in sync with the Velopack package in Ember.csproj
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Read version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $v = '${{ github.ref_name }}'.TrimStart('v')
+          "value=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Publish
+        run: >
+          dotnet publish src/Ember/Ember.csproj -c Release -r win-x64 --self-contained true
+          -p:Version=${{ steps.version.outputs.value }} -o publish
+
+      - name: Install Velopack CLI
+        run: dotnet tool install -g vpk --version ${{ env.VPK_VERSION }}
+
+      - name: Download previous release (enables small delta updates)
+        continue-on-error: true
+        run: vpk download github --repoUrl https://github.com/${{ github.repository }} --token ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pack
+        run: >
+          vpk pack --packId Ember --packTitle Ember --packAuthors "Ember contributors"
+          --packVersion ${{ steps.version.outputs.value }}
+          --packDir publish --mainExe Ember.exe --icon src/Ember/Assets/ember.ico
+
+      - name: Upload to GitHub Releases
+        run: >
+          vpk upload github --repoUrl https://github.com/${{ github.repository }}
+          --publish --releaseName "Ember ${{ steps.version.outputs.value }}"
+          --tag ${{ github.ref_name }} --token ${{ secrets.GITHUB_TOKEN }}

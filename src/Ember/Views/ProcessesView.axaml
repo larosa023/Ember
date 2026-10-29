@@ -1,0 +1,61 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Ember.ViewModels"
+             x:Class="Ember.Views.ProcessesView"
+             x:DataType="vm:ProcessesViewModel">
+
+  <DockPanel>
+    <StackPanel DockPanel.Dock="Top" Spacing="16" Margin="0,0,0,16">
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <Button Content="Open file location" Command="{Binding OpenLocationCommand}" />
+          <Button Content="End tree" Command="{Binding EndTreeCommand}" />
+          <Button Classes="accent" Content="End task" Command="{Binding EndTaskCommand}" />
+        </StackPanel>
+        <StackPanel Spacing="2">
+          <TextBlock Classes="h1" Text="Processes" />
+          <TextBlock Classes="label" Text="{Binding Summary}" />
+        </StackPanel>
+      </DockPanel>
+      <TextBox Watermark="Search by name or PID" Text="{Binding Search}" CornerRadius="10" />
+    </StackPanel>
+
+    <TextBlock DockPanel.Dock="Bottom" Classes="label" Margin="4,10,0,0"
+               TextWrapping="Wrap" Text="{Binding Status}" />
+
+    <Border Classes="card" Padding="0">
+      <DockPanel>
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,90,90,110" Margin="26,14,26,8">
+          <Button Grid.Column="0" Classes="header" Content="{Binding NameHeader}"
+                  Command="{Binding SortCommand}" CommandParameter="name" />
+          <Button Grid.Column="1" Classes="header" Content="{Binding PidHeader}" HorizontalAlignment="Right"
+                  Command="{Binding SortCommand}" CommandParameter="pid" />
+          <Button Grid.Column="2" Classes="header" Content="{Binding CpuHeader}" HorizontalAlignment="Right"
+                  Command="{Binding SortCommand}" CommandParameter="cpu" />
+          <Button Grid.Column="3" Classes="header" Content="{Binding MemoryHeader}" HorizontalAlignment="Right"
+                  Command="{Binding SortCommand}" CommandParameter="mem" />
+        </Grid>
+
+        <ListBox Classes="rows" ItemsSource="{Binding Rows}" SelectedItem="{Binding Selected}">
+          <ListBox.KeyBindings>
+            <KeyBinding Gesture="Delete" Command="{Binding EndTaskCommand}" />
+          </ListBox.KeyBindings>
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:ProcessRow">
+              <Grid ColumnDefinitions="*,90,90,110">
+                <DockPanel Grid.Column="0">
+                  <Image DockPanel.Dock="Left" Source="{Binding Icon}" Width="18" Height="18" Margin="0,0,10,0"
+                         VerticalAlignment="Center" RenderOptions.BitmapInterpolationMode="HighQuality" />
+                  <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                </DockPanel>
+                <TextBlock Grid.Column="1" Classes="label" Text="{Binding Pid}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="2" Text="{Binding CpuText}" HorizontalAlignment="Right" />
+                <TextBlock Grid.Column="3" Text="{Binding MemoryText}" HorizontalAlignment="Right" />
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </DockPanel>
+    </Border>
+  </DockPanel>
+</UserControl>

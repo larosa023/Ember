@@ -1,0 +1,94 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Ember.ViewModels"
+        x:Class="Ember.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="Ember"
+        Icon="/Assets/ember.ico"
+        Width="1180" Height="760" MinWidth="980" MinHeight="640"
+        WindowStartupLocation="CenterScreen"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="40">
+
+  <Grid ColumnDefinitions="224,*">
+
+    <!-- Sidebar -->
+    <Border Grid.Column="0"
+            Background="{DynamicResource Surface}"
+            BorderBrush="{DynamicResource Stroke}"
+            BorderThickness="0,0,1,0">
+      <DockPanel Margin="14,16,14,16">
+
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="10"
+                    Margin="8,2,0,28" IsHitTestVisible="False">
+          <Ellipse Width="14" Height="14" Fill="{DynamicResource Accent}" VerticalAlignment="Center" />
+          <TextBlock Text="Ember" FontSize="19" FontWeight="SemiBold" />
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Bottom" Spacing="10">
+          <Button Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                  IsVisible="{Binding Settings.UpdateReady}"
+                  Command="{Binding Settings.InstallUpdateCommand}"
+                  Content="Update ready · Restart" />
+
+          <Border Classes="banner" IsVisible="{Binding !IsElevated}">
+            <StackPanel Spacing="8">
+              <TextBlock Text="CPU temps need admin" FontWeight="SemiBold" FontSize="13" />
+              <TextBlock Classes="label" TextWrapping="Wrap"
+                         Text="Windows hides some sensors from normal apps." />
+              <Button Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                      Command="{Binding RestartAsAdminCommand}" Content="Restart as admin" />
+            </StackPanel>
+          </Border>
+
+          <TextBlock Classes="label" Margin="8,0" Text="{Binding VersionText}" />
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+          <Button Classes="nav" Classes.active="{Binding IsDashboard}"
+                  Command="{Binding NavigateCommand}" CommandParameter="dashboard">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+              <TextBlock Classes="icon" Text="&#xE80F;" />
+              <TextBlock Text="Dashboard" />
+            </StackPanel>
+          </Button>
+          <Button Classes="nav" Classes.active="{Binding IsProcesses}"
+                  Command="{Binding NavigateCommand}" CommandParameter="processes">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+              <TextBlock Classes="icon" Text="&#xE8FD;" />
+              <TextBlock Text="Processes" />
+            </StackPanel>
+          </Button>
+          <Button Classes="nav" Classes.active="{Binding IsSensors}"
+                  Command="{Binding NavigateCommand}" CommandParameter="sensors">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+              <TextBlock Classes="icon" Text="&#xE9D2;" />
+              <TextBlock Text="Sensors" />
+            </StackPanel>
+          </Button>
+          <Button Classes="nav" Classes.active="{Binding IsStartup}"
+                  Command="{Binding NavigateCommand}" CommandParameter="startup">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+              <TextBlock Classes="icon" Text="&#xE768;" />
+              <TextBlock Text="Startup apps" />
+            </StackPanel>
+          </Button>
+          <Button Classes="nav" Classes.active="{Binding IsSettings}"
+                  Command="{Binding NavigateCommand}" CommandParameter="settings">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+              <TextBlock Classes="icon" Text="&#xE713;" />
+              <TextBlock Text="Settings" />
+            </StackPanel>
+          </Button>
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
+    <!-- Page -->
+    <TransitioningContentControl Grid.Column="1" Margin="32,48,32,28" Content="{Binding CurrentPage}">
+      <TransitioningContentControl.PageTransition>
+        <CrossFade Duration="0:0:0.15" />
+      </TransitioningContentControl.PageTransition>
+    </TransitioningContentControl>
+  </Grid>
+</Window>

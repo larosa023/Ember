@@ -1,0 +1,125 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Ember.ViewModels"
+             xmlns:c="using:Ember.Controls"
+             x:Class="Ember.Views.DashboardView"
+             x:DataType="vm:DashboardViewModel">
+
+  <ScrollViewer>
+    <StackPanel Spacing="22">
+
+      <StackPanel Spacing="2">
+        <TextBlock Classes="h1" Text="Dashboard" />
+        <TextBlock Classes="label" Text="{Binding UptimeText}" />
+      </StackPanel>
+
+      <Grid ColumnDefinitions="*,16,*,16,*">
+
+        <!-- CPU -->
+        <Border Grid.Column="0" Classes="card">
+          <StackPanel Spacing="18">
+            <StackPanel Spacing="4">
+              <TextBlock Classes="eyebrow" Text="PROCESSOR" />
+              <TextBlock Classes="h2" Text="{Binding CpuName}" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+
+            <Grid Width="168" Height="168" HorizontalAlignment="Center">
+              <c:RingGauge Value="{Binding CpuLoad}" StrokeThickness="13" />
+              <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Classes="big" HorizontalAlignment="Center" Text="{Binding CpuLoadText}" />
+                <TextBlock Classes="label" HorizontalAlignment="Center" Text="usage" />
+              </StackPanel>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*,*">
+              <StackPanel Grid.Column="0" Spacing="2">
+                <TextBlock Classes="label" Text="Temp" />
+                <TextBlock Classes="stat" Text="{Binding CpuTempText}" />
+              </StackPanel>
+              <StackPanel Grid.Column="1" Spacing="2">
+                <TextBlock Classes="label" Text="Clock" />
+                <TextBlock Classes="stat" Text="{Binding CpuClockText}" />
+              </StackPanel>
+              <StackPanel Grid.Column="2" Spacing="2">
+                <TextBlock Classes="label" Text="Power" />
+                <TextBlock Classes="stat" Text="{Binding CpuPowerText}" />
+              </StackPanel>
+            </Grid>
+
+            <c:Sparkline Height="52" Values="{Binding CpuHistoryValues}" />
+          </StackPanel>
+        </Border>
+
+        <!-- GPU -->
+        <Border Grid.Column="2" Classes="card">
+          <StackPanel Spacing="18">
+            <StackPanel Spacing="4">
+              <TextBlock Classes="eyebrow" Text="GRAPHICS" />
+              <TextBlock Classes="h2" Text="{Binding GpuName}" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+
+            <Grid Width="168" Height="168" HorizontalAlignment="Center">
+              <c:RingGauge Value="{Binding GpuLoad}" StrokeThickness="13" />
+              <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Classes="big" HorizontalAlignment="Center" Text="{Binding GpuLoadText}" />
+                <TextBlock Classes="label" HorizontalAlignment="Center" Text="usage" />
+              </StackPanel>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*,*">
+              <StackPanel Grid.Column="0" Spacing="2">
+                <TextBlock Classes="label" Text="Temp" />
+                <TextBlock Classes="stat" Text="{Binding GpuTempText}" />
+              </StackPanel>
+              <StackPanel Grid.Column="1" Spacing="2">
+                <TextBlock Classes="label" Text="Clock" />
+                <TextBlock Classes="stat" Text="{Binding GpuClockText}" />
+              </StackPanel>
+              <StackPanel Grid.Column="2" Spacing="2">
+                <TextBlock Classes="label" Text="VRAM" />
+                <TextBlock Classes="stat" Text="{Binding VramText}" />
+              </StackPanel>
+            </Grid>
+
+            <c:Sparkline Height="52" Values="{Binding GpuHistoryValues}" />
+          </StackPanel>
+        </Border>
+
+        <!-- Memory -->
+        <Border Grid.Column="4" Classes="card">
+          <StackPanel Spacing="18">
+            <StackPanel Spacing="4">
+              <TextBlock Classes="eyebrow" Text="MEMORY" />
+              <TextBlock Classes="h2" Text="{Binding RamTotalText, StringFormat='{}{0} installed'}" />
+            </StackPanel>
+
+            <Grid Width="168" Height="168" HorizontalAlignment="Center">
+              <c:RingGauge Value="{Binding RamLoad}" StrokeThickness="13" />
+              <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Classes="big" HorizontalAlignment="Center" Text="{Binding RamLoadText}" />
+                <TextBlock Classes="label" HorizontalAlignment="Center" Text="in use" />
+              </StackPanel>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*,*">
+              <StackPanel Grid.Column="0" Spacing="2">
+                <TextBlock Classes="label" Text="Used" />
+                <TextBlock Classes="stat" Text="{Binding RamUsedText}" />
+              </StackPanel>
+              <StackPanel Grid.Column="1" Spacing="2">
+                <TextBlock Classes="label" Text="Free" />
+                <TextBlock Classes="stat" Text="{Binding RamFreeText}" />
+              </StackPanel>
+              <StackPanel Grid.Column="2" Spacing="2">
+                <TextBlock Classes="label" Text="Total" />
+                <TextBlock Classes="stat" Text="{Binding RamTotalText}" />
+              </StackPanel>
+            </Grid>
+
+            <c:Sparkline Height="52" Values="{Binding RamHistoryValues}" />
+          </StackPanel>
+        </Border>
+      </Grid>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
