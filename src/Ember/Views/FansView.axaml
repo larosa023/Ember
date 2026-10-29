@@ -1,0 +1,99 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Ember.ViewModels"
+             xmlns:c="using:Ember.Controls"
+             x:Class="Ember.Views.FansView"
+             x:DataType="vm:FansViewModel">
+
+  <ScrollViewer>
+    <StackPanel Spacing="16" MaxWidth="900" HorizontalAlignment="Left">
+
+      <DockPanel>
+        <Button DockPanel.Dock="Right" VerticalAlignment="Center"
+                Content="Give all fans back to BIOS" Command="{Binding RestoreAllCommand}" />
+        <StackPanel Spacing="2">
+          <TextBlock Classes="h1" Text="Fans" />
+          <TextBlock Classes="label" Text="{Binding Summary}" />
+        </StackPanel>
+      </DockPanel>
+
+      <Border Classes="banner" IsVisible="{Binding !IsElevated}">
+        <TextBlock TextWrapping="Wrap"
+                   Text="Fan control needs admin. Use &quot;Restart as admin&quot; in the sidebar, or turn on &quot;Start with admin rights&quot; in Settings." />
+      </Border>
+
+      <Border Classes="card" IsVisible="{Binding !HasFans}">
+        <StackPanel Spacing="8">
+          <TextBlock Classes="h2" Text="No controllable fans yet" />
+          <TextBlock Classes="label" TextWrapping="Wrap"
+                     Text="Ember needs to be running as admin with the PawnIO sensor driver installed. If both are set and nothing shows up, your motherboard's fan chip may be locked by the manufacturer; your BIOS fan settings still work." />
+        </StackPanel>
+      </Border>
+
+      <ItemsControl ItemsSource="{Binding Fans}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Spacing="12" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:FanViewModel">
+            <Border Classes="card">
+              <StackPanel Spacing="14">
+
+                <DockPanel>
+                  <ComboBox DockPanel.Dock="Right" MinWidth="170" VerticalAlignment="Center"
+                            SelectedIndex="{Binding ModeIndex}">
+                    <ComboBoxItem Content="Auto (BIOS)" />
+                    <ComboBoxItem Content="Fixed speed" />
+                    <ComboBoxItem Content="Custom curve" />
+                  </ComboBox>
+                  <StackPanel Spacing="2">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                      <TextBlock Classes="h2" Text="{Binding Name}" />
+                      <TextBlock Classes="stat" Foreground="{DynamicResource Accent}" Text="{Binding Readout}" VerticalAlignment="Center" FontSize="13" />
+                    </StackPanel>
+                    <TextBlock Classes="label" Text="{Binding Hardware}" />
+                  </StackPanel>
+                </DockPanel>
+
+                <!-- Fixed -->
+                <DockPanel IsVisible="{Binding IsFixed}">
+                  <TextBlock DockPanel.Dock="Right" Classes="stat" Width="52" TextAlignment="Right"
+                             VerticalAlignment="Center" Text="{Binding FixedText}" />
+                  <Slider Minimum="{Binding MinPercent}" Maximum="100" Value="{Binding FixedPercent}"
+                          TickFrequency="5" IsSnapToTickEnabled="True" />
+                </DockPanel>
+
+                <!-- Curve -->
+                <StackPanel Spacing="10" IsVisible="{Binding IsCurve}">
+                  <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
+                      <Button Content="Silent" Command="{Binding PresetCommand}" CommandParameter="silent" />
+                      <Button Content="Balanced" Command="{Binding PresetCommand}" CommandParameter="balanced" />
+                      <Button Content="Performance" Command="{Binding PresetCommand}" CommandParameter="performance" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                      <TextBlock Classes="label" Text="Follow" VerticalAlignment="Center" />
+                      <ComboBox MinWidth="240" MaxWidth="340"
+                                ItemsSource="{Binding TempSources}" SelectedItem="{Binding TempSource}" />
+                      <TextBlock Classes="label" Text="{Binding CurrentTempText}" VerticalAlignment="Center" />
+                    </StackPanel>
+                  </DockPanel>
+                  <c:CurveEditor Height="230" Points="{Binding Points}"
+                                 CurrentTemp="{Binding CurrentTemp}" CurrentPercent="{Binding CurrentPercent}" />
+                  <TextBlock Classes="label" TextWrapping="Wrap"
+                             Text="Drag the points to shape the curve. The dashed line is the current temperature. Never below the fan's minimum speed; full speed if the sensor stops reporting." />
+                </StackPanel>
+
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <TextBlock Classes="label" TextWrapping="Wrap" Margin="4,0"
+                 Text="Fans return to BIOS control when Ember closes, updates or crashes. If Ember is force-killed (e.g. from Task Manager), fans keep their last speed until you reopen Ember or restart." />
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

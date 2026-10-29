@@ -156,6 +156,13 @@
       </Transitions>
     </Setter>
   </Style>
+  <Style Selector="c|CurveEditor">
+    <Setter Property="LineBrush" Value="{DynamicResource Accent}" />
+    <Setter Property="FillBrush" Value="{DynamicResource AccentSoft}" />
+    <Setter Property="GridBrush" Value="{DynamicResource Stroke}" />
+    <Setter Property="LabelBrush" Value="{DynamicResource TextMuted}" />
+    <Setter Property="MarkerBrush" Value="{DynamicResource Text}" />
+  </Style>
   <Style Selector="c|Sparkline">
     <Setter Property="Stroke" Value="{DynamicResource Accent}" />
     <Setter Property="Fill" Value="{DynamicResource AccentSoft}" />

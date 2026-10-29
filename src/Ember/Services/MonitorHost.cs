@@ -42,7 +42,11 @@ public sealed class MonitorHost : IDisposable
         set => _sampleProcesses = value;
     }
 
-    public void Start() => _ = Task.Run(LoopAsync);
+    private Task? _loop;
+
+    public FanController Fans => _sensors.Fans;
+
+    public void Start() => _loop = Task.Run(LoopAsync);
 
     private async Task LoopAsync()
     {
@@ -80,5 +84,10 @@ public sealed class MonitorHost : IDisposable
         _sensors.Dispose();
     }
 
-    public void Dispose() => _cts.Cancel();
+    /// <summary>Stops the loop and waits briefly so fans are restored to BIOS control before exit.</summary>
+    public void Dispose()
+    {
+        _cts.Cancel();
+        try { _loop?.Wait(TimeSpan.FromSeconds(3)); } catch { }
+    }
 }

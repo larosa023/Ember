@@ -13,13 +13,14 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly MonitorHost _host;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsDashboard), nameof(IsProcesses), nameof(IsSensors), nameof(IsStartup), nameof(IsSettings))]
+    [NotifyPropertyChangedFor(nameof(IsDashboard), nameof(IsProcesses), nameof(IsSensors), nameof(IsFans), nameof(IsStartup), nameof(IsSettings))]
     private ViewModelBase _currentPage;
 
     public MainWindowViewModel(MonitorHost host, SettingsService settings, ThemeService themes, UpdateService updates)
     {
         _host = host;
         Settings = new SettingsViewModel(settings, themes, updates, host);
+        Fans = new FansViewModel(settings, host);
         _currentPage = Dashboard;
         _host.Tick += OnTick;
     }
@@ -29,19 +30,61 @@ public partial class MainWindowViewModel : ViewModelBase
     public SensorsViewModel Sensors { get; } = new();
     public StartupViewModel Startup { get; } = new();
     public SettingsViewModel Settings { get; }
+    public FansViewModel Fans { get; }
 
     public bool IsDashboard => CurrentPage == Dashboard;
     public bool IsProcesses => CurrentPage == Processes;
     public bool IsSensors => CurrentPage == Sensors;
+    public bool IsFans => CurrentPage == Fans;
     public bool IsStartup => CurrentPage == Startup;
     public bool IsSettings => CurrentPage == Settings;
 
     public bool IsElevated => Environment.IsPrivilegedProcess;
     public string VersionText => $"v{AppInfo.Version}";
 
+    // ---------- Sensor driver (PawnIO) ----------
+
+    private int _ticks;
+
+    /// <summary>CPU temps are missing and the PawnIO driver isn't installed: offer to install it.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowAdminBanner))]
+    private bool _showDriverBanner;
+
+    [ObservableProperty] private bool _isInstallingDriver;
+    [ObservableProperty] private string _driverStatus = "";
+
+    public bool ShowAdminBanner => !IsElevated && !ShowDriverBanner;
+
+    [RelayCommand]
+    private async Task InstallDriver()
+    {
+        IsInstallingDriver = true;
+        DriverStatus = "Installing… approve the Windows prompt.";
+        var ok = await PawnIo.InstallAsync();
+        IsInstallingDriver = false;
+
+        if (ok)
+        {
+            DriverStatus = "Installed. Restarting Ember…";
+            RestartAsAdmin();
+        }
+        else
+        {
+            DriverStatus = "Couldn't install automatically. The download page is open; run the installer, then restart Ember.";
+        }
+    }
+
     private void OnTick(HardwareSnapshot snapshot, IReadOnlyList<ProcessInfo>? processes)
     {
+        // Give sensors a few seconds to come up before deciding the driver is missing.
+        if (_ticks < 4 && ++_ticks == 4)
+            ShowDriverBanner = snapshot.CpuTemp is null && !PawnIo.IsInstalled;
+        else if (ShowDriverBanner && snapshot.CpuTemp is not null)
+            ShowDriverBanner = false;
+
         Dashboard.Update(snapshot);
+        Fans.Update(snapshot);
         Sensors.Update(snapshot.Sensors);
         Settings.UpdateGpuList(snapshot.GpuNames);
         if (processes is not null) Processes.Update(processes);
@@ -54,6 +97,7 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             "processes" => Processes,
             "sensors" => Sensors,
+            "fans" => Fans,
             "startup" => Startup,
             "settings" => Settings,
             _ => Dashboard,

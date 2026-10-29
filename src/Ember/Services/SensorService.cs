@@ -22,6 +22,9 @@ public sealed class SensorService : IDisposable
 
     private readonly UpdateVisitor _visitor = new();
     private readonly GpuFallback _gpuFallback = new();
+
+    /// <summary>Drives fans per the user's Auto / Fixed / Curve settings, once per tick.</summary>
+    public FanController Fans { get; } = new();
     private volatile string? _preferredGpu;
     private bool _opened;
 
@@ -58,6 +61,8 @@ public sealed class SensorService : IDisposable
                     gpus.Add(hw);
                     break;
                 case HardwareType.Memory:
+                    // Newer LHM reports "Total Memory" and "Virtual Memory" separately; we want physical RAM.
+                    if (hw.Name.Contains("Virtual", StringComparison.OrdinalIgnoreCase)) break;
                     if (memory is null && Find(hw, SensorType.Data, "Memory Used") is not null) memory = hw;
                     break;
             }
@@ -86,6 +91,14 @@ public sealed class SensorService : IDisposable
             if (gpu is null) gpuName = _gpuFallback.Name ?? "No GPU detected";
         }
 
+        var temps = new Dictionary<string, float?>();
+        foreach (var r in all)
+            if (r.Type == SensorType.Temperature) temps[r.Id] = r.Value;
+
+        List<FanChannel> fanChannels;
+        try { fanChannels = Fans.Update(_computer.Hardware, temps); }
+        catch { fanChannels = new List<FanChannel>(); }
+
         var gpuNames = gpus.Select(g => g.Name).ToList();
         if (gpuNames.Count == 0 && _gpuFallback.Name is { } fallbackName) gpuNames.Add(fallbackName);
 
@@ -111,7 +124,8 @@ public sealed class SensorService : IDisposable
             RamLoad: memory is null ? null : Find(memory, SensorType.Load, "Memory"),
 
             GpuNames: gpuNames,
-            Sensors: all);
+            Sensors: all,
+            FanChannels: fanChannels);
     }
 
     private IHardware? PickGpu(List<IHardware> gpus)
@@ -183,6 +197,7 @@ public sealed class SensorService : IDisposable
 
     public void Dispose()
     {
+        Fans.RestoreAll();   // hand every fan back to the BIOS before we let go of the hardware
         _gpuFallback.Dispose();
         if (_opened)
         {

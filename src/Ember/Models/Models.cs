@@ -19,7 +19,8 @@ public sealed record HardwareSnapshot(
     float? VramUsedMb, float? VramTotalMb,
     float? RamUsedGb, float? RamFreeGb, float? RamLoad,
     IReadOnlyList<string> GpuNames,
-    IReadOnlyList<SensorReading> Sensors)
+    IReadOnlyList<SensorReading> Sensors,
+    IReadOnlyList<FanChannel> FanChannels)
 {
     public static readonly HardwareSnapshot Empty = new(
         "Processor", null, null, null, null,
@@ -27,7 +28,8 @@ public sealed record HardwareSnapshot(
         null, null,
         null, null, null,
         Array.Empty<string>(),
-        Array.Empty<SensorReading>());
+        Array.Empty<SensorReading>(),
+        Array.Empty<FanChannel>());
 }
 
 public sealed record ProcessInfo(
@@ -49,6 +51,9 @@ public sealed class AppSettings
 
     /// <summary>Process list column widths (name, pid, cpu, mem), set by dragging the header dividers.</summary>
     public Dictionary<string, double> ProcessColumns { get; set; } = new();
+
+    /// <summary>Per-fan control settings (Auto / Fixed / Curve).</summary>
+    public List<FanConfig> Fans { get; set; } = new();
 }
 
 /// <summary>A color theme. Built-ins live in ThemeService; users can drop JSON files in %AppData%\Ember\themes.</summary>
@@ -67,4 +72,49 @@ public sealed class ThemeDefinition
     public string Good { get; set; } = "#3DDC97";
     public string Warn { get; set; } = "#FFB020";
     public string Hot { get; set; } = "#FF4D4F";
+}
+
+/// <summary>A controllable fan found by LibreHardwareMonitor (motherboard header or GPU).</summary>
+public sealed record FanChannel(
+    string Id, string Name, string Hardware,
+    float? Percent, float? Rpm,
+    float MinPercent, float MaxPercent, bool IsGpu);
+
+public enum FanMode { Auto, Fixed, Curve }
+
+public sealed class CurvePointData
+{
+    public double Temp { get; set; }
+    public double Percent { get; set; }
+}
+
+public sealed class FanConfig
+{
+    public string Id { get; set; } = "";
+    public FanMode Mode { get; set; } = FanMode.Auto;
+    public double FixedPercent { get; set; } = 50;
+    public string? TempSource { get; set; }
+    public List<CurvePointData> Points { get; set; } = DefaultCurve();
+
+    /// <summary>Floor so a fan can never be driven to a stall by accident.</summary>
+    public double MinPercent { get; set; } = 20;
+
+    public static List<CurvePointData> DefaultCurve() =>
+    [
+        new() { Temp = 30, Percent = 25 },
+        new() { Temp = 50, Percent = 35 },
+        new() { Temp = 65, Percent = 55 },
+        new() { Temp = 80, Percent = 85 },
+        new() { Temp = 90, Percent = 100 },
+    ];
+
+    public FanConfig Clone() => new()
+    {
+        Id = Id,
+        Mode = Mode,
+        FixedPercent = FixedPercent,
+        TempSource = TempSource,
+        MinPercent = MinPercent,
+        Points = Points.Select(p => new CurvePointData { Temp = p.Temp, Percent = p.Percent }).ToList(),
+    };
 }

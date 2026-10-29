@@ -10,6 +10,7 @@ Ember shows your CPU, GPU and memory at a glance (usage, temperatures, clocks, p
 
 - **Dashboard**: animated ring gauges and 60-second history graphs for CPU, GPU and RAM, with temps, clocks, power and VRAM
 - **Processes**: live CPU and memory per process, search by name or PID, sort any column, End task / End tree (or press `Delete`), Open file location
+- **Fans**: per-fan Auto (BIOS), fixed speed or a drag-to-edit curve linked to any temperature, with safety rails (minimum speed, 100% if the sensor drops out, fans handed back to BIOS when Ember exits)
 - **Sensors**: every sensor your hardware exposes (temps, fans, voltages, clocks, loads, power) with min and max
 - **Startup apps**: enable or disable apps that launch with Windows, same as Task Manager
 - **Themes**: five built-in themes that switch instantly, plus your own themes as simple JSON files
@@ -20,7 +21,7 @@ Ember shows your CPU, GPU and memory at a glance (usage, temperatures, clocks, p
 
 Download `Ember-win-Setup.exe` from the [latest release](../../releases/latest) and run it. Ember installs per-user (no admin needed) and keeps itself up to date.
 
-> **CPU temperatures need admin.** Windows hides some sensors from normal apps. Use **Restart as admin** in the sidebar when you want them.
+> **CPU temperatures and fan control need two things:** Ember running as admin, and the free [PawnIO](https://github.com/namazso/PawnIO.Setup) sensor driver (Windows Defender blocks the old WinRing0 driver). If it's missing, Ember shows an **Install driver** button in the sidebar that installs it with one prompt.
 
 ## Themes
 
@@ -95,7 +96,8 @@ src/Ember/
 - [ ] Compact always-on-top overlay
 - [ ] Services page
 - [ ] Per-process GPU and disk usage
-- [ ] Fan curves
+- [x] Fan curves
+- [ ] GPU tuning (power limit, clocks)
 - [ ] Temperature alerts
 
 ## License
