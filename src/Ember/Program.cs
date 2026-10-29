@@ -14,7 +14,7 @@ internal static class Program
     {
         // Must run first: lets Velopack handle install/update/uninstall hooks.
         VelopackApp.Build()
-            .WithBeforeUninstallFastCallback(_ => AutoStart.RemoveAll())
+            .OnBeforeUninstallFastCallback(_ => AutoStart.RemoveAll())
             .Run();
 
         StartMinimized = args.Contains("--minimized");
