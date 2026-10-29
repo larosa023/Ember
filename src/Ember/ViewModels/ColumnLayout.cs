@@ -9,8 +9,6 @@ namespace Ember.ViewModels;
 /// </summary>
 public partial class ColumnLayout : ObservableObject
 {
-    public static ColumnLayout Instance { get; } = new();
-
     private static readonly Dictionary<string, (double Default, double Min)> Limits = new()
     {
         ["name"] = (340, 140),
@@ -18,6 +16,9 @@ public partial class ColumnLayout : ObservableObject
         ["cpu"] = (70, 44),
         ["mem"] = (90, 56),
     };
+
+    // Must come after Limits: static fields initialize top to bottom, and the constructor reads Limits.
+    public static ColumnLayout Instance { get; } = new();
 
     private SettingsService? _settings;
 

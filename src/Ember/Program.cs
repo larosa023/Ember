@@ -24,7 +24,16 @@ internal static class Program
         if (!SingleInstance.TryAcquire(waitForPrevious: args.Contains("--restarted")))
             return;
 
-        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        AppDomain.CurrentDomain.UnhandledException += (_, e) => CrashLog.Write(e.ExceptionObject as Exception);
+        try
+        {
+            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex);
+            CrashLog.ShowMessage(ex);
+        }
     }
 
     public static AppBuilder BuildAvaloniaApp() =>
