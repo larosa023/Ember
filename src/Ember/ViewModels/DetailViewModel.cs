@@ -25,7 +25,7 @@ public partial class DetailViewModel : ViewModelBase
         SensorType.Throughput,
     ];
 
-    private readonly double[] _history = new double[HistoryLength];
+    private readonly double[] _buffer = new double[HistoryLength];
     private readonly Action _back;
     private readonly Dictionary<string, StatTile> _stats = new();
     private readonly Dictionary<string, CoreTile> _cores = new();
@@ -77,9 +77,9 @@ public partial class DetailViewModel : ViewModelBase
             DetailKind.Gpu => s.GpuLoad ?? 0,
             _ => s.RamLoad ?? 0,
         };
-        Array.Copy(_history, 1, _history, 0, HistoryLength - 1);
-        _history[^1] = main;
-        History = (double[])_history.Clone();
+        Array.Copy(_buffer, 1, _buffer, 0, HistoryLength - 1);
+        _buffer[^1] = main;
+        History = (double[])_buffer.Clone();
 
         switch (Kind)
         {
