@@ -25,9 +25,15 @@ public partial class SettingsViewModel : ViewModelBase
     private bool _init = true;
     private bool _taskExists;
 
-    public SettingsViewModel(SettingsService settings, ThemeService themes, UpdateService updates, MonitorHost host)
+    private readonly AlertService _alerts;
+
+    public SettingsViewModel(SettingsService settings, ThemeService themes, UpdateService updates, MonitorHost host, AlertService alerts)
     {
+        _alerts = alerts;
         _settings = settings;
+        _alertsEnabled = settings.Current.AlertsEnabled;
+        _cpuAlert = settings.Current.CpuAlertC;
+        _gpuAlert = settings.Current.GpuAlertC;
         _themes = themes;
         _updates = updates;
         _host = host;
@@ -123,7 +129,45 @@ public partial class SettingsViewModel : ViewModelBase
         Format.UseFahrenheit = value;
         _settings.Current.UseFahrenheit = value;
         _settings.Save();
+        OnPropertyChanged(nameof(CpuAlertText));
+        OnPropertyChanged(nameof(GpuAlertText));
     }
+
+    // ---------- Alerts ----------
+
+    [ObservableProperty] private bool _alertsEnabled;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CpuAlertText))]
+    private double _cpuAlert;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(GpuAlertText))]
+    private double _gpuAlert;
+
+    public string CpuAlertText => Format.Temp((float)CpuAlert);
+    public string GpuAlertText => Format.Temp((float)GpuAlert);
+
+    partial void OnAlertsEnabledChanged(bool value)
+    {
+        _settings.Current.AlertsEnabled = value;
+        _settings.Save();
+    }
+
+    partial void OnCpuAlertChanged(double value)
+    {
+        _settings.Current.CpuAlertC = Math.Round(value);
+        _settings.Save();
+    }
+
+    partial void OnGpuAlertChanged(double value)
+    {
+        _settings.Current.GpuAlertC = Math.Round(value);
+        _settings.Save();
+    }
+
+    [RelayCommand]
+    private void SendTestAlert() => _alerts.ShowTest();
 
     partial void OnSelectedGpuChanged(string? value)
     {

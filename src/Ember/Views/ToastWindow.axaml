@@ -1,0 +1,36 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Ember.Views.ToastWindow"
+        Title="Ember alert"
+        Width="360" SizeToContent="Height"
+        SystemDecorations="None" CanResize="False"
+        ShowInTaskbar="False" ShowActivated="False" Topmost="True"
+        Background="Transparent" TransparencyLevelHint="Transparent"
+        Opacity="0">
+
+  <Window.Transitions>
+    <Transitions>
+      <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+    </Transitions>
+  </Window.Transitions>
+
+  <Border Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Stroke}" BorderThickness="1"
+          CornerRadius="12" Padding="16,14" Margin="1" Cursor="Hand" x:Name="Card">
+    <DockPanel>
+      <Button DockPanel.Dock="Right" Classes="chevron" VerticalAlignment="Top" Margin="8,-4,-6,0"
+              x:Name="CloseButton" ToolTip.Tip="Dismiss">
+        <TextBlock Classes="icon" FontSize="10" Text="&#xE711;" />
+      </Button>
+      <Border DockPanel.Dock="Left" Width="34" Height="34" CornerRadius="10" Margin="0,0,12,0"
+              VerticalAlignment="Top" x:Name="IconBadge" Background="{DynamicResource AccentSoft}">
+        <TextBlock Classes="icon" FontSize="16" HorizontalAlignment="Center" x:Name="IconGlyph"
+                   Foreground="{DynamicResource Accent}" Text="&#xE7BA;" />
+      </Border>
+      <StackPanel Spacing="3">
+        <TextBlock x:Name="TitleText" FontWeight="SemiBold" FontSize="14" TextWrapping="Wrap" />
+        <TextBlock x:Name="MessageText" Classes="label" FontSize="12.5" TextWrapping="Wrap" />
+        <TextBlock Classes="label" FontSize="11" Margin="0,4,0,0" Text="Click to open Ember" />
+      </StackPanel>
+    </DockPanel>
+  </Border>
+</Window>

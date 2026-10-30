@@ -76,6 +76,48 @@
         </StackPanel>
       </Border>
 
+      <!-- Alerts -->
+      <TextBlock Classes="eyebrow" Text="ALERTS" Margin="4,16,4,0" />
+      <Border Classes="card" Padding="20,2">
+        <StackPanel>
+          <Border Classes="row">
+            <DockPanel>
+              <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding AlertsEnabled}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Temperature alerts" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap"
+                           Text="A pop-up when the CPU or GPU stays above its limit for 10 seconds. Works while Ember is in the tray." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
+          <Border Classes="row" IsEnabled="{Binding AlertsEnabled}">
+            <DockPanel>
+              <TextBlock DockPanel.Dock="Right" Classes="stat" Width="56" TextAlignment="Right" VerticalAlignment="Center"
+                         Text="{Binding CpuAlertText}" />
+              <Slider DockPanel.Dock="Right" Width="220" Minimum="60" Maximum="105" TickFrequency="1"
+                      IsSnapToTickEnabled="True" Value="{Binding CpuAlert}" VerticalAlignment="Center" />
+              <TextBlock Text="CPU limit" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </DockPanel>
+          </Border>
+          <Border Classes="row" IsEnabled="{Binding AlertsEnabled}">
+            <DockPanel>
+              <TextBlock DockPanel.Dock="Right" Classes="stat" Width="56" TextAlignment="Right" VerticalAlignment="Center"
+                         Text="{Binding GpuAlertText}" />
+              <Slider DockPanel.Dock="Right" Width="220" Minimum="60" Maximum="105" TickFrequency="1"
+                      IsSnapToTickEnabled="True" Value="{Binding GpuAlert}" VerticalAlignment="Center" />
+              <TextBlock Text="GPU limit" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </DockPanel>
+          </Border>
+          <Border Classes="row">
+            <DockPanel>
+              <Button DockPanel.Dock="Right" Classes="ghost" Content="Send test alert" Command="{Binding SendTestAlertCommand}" />
+              <TextBlock Classes="label" VerticalAlignment="Center" TextWrapping="Wrap"
+                         Text="Modern CPUs can run up to 95–100°C under load by design; most GPUs are happiest below 85°C." />
+            </DockPanel>
+          </Border>
+        </StackPanel>
+      </Border>
+
       <!-- Startup & tray -->
       <TextBlock Classes="eyebrow" Text="STARTUP &amp; TRAY" Margin="4,16,4,0" />
       <Border Classes="card" Padding="20,2">

@@ -57,6 +57,11 @@ public sealed class AppSettings
     public List<FanConfig> Fans { get; set; } = new();
 
     public bool SidebarCollapsed { get; set; }
+
+    // Temperature alerts (thresholds stored in °C)
+    public bool AlertsEnabled { get; set; } = true;
+    public double CpuAlertC { get; set; } = 95;
+    public double GpuAlertC { get; set; } = 85;
 }
 
 /// <summary>A color theme. Built-ins live in ThemeService; users can drop JSON files in %AppData%\Ember\themes.</summary>

@@ -44,8 +44,10 @@ public partial class App : Application
                 PreferredGpu = _settings.Current.PreferredGpu,
             };
 
-            _vm = new MainWindowViewModel(_host, _settings, themes, new UpdateService());
+            var alerts = new AlertService(_settings, ShowWindow);
+            _vm = new MainWindowViewModel(_host, _settings, themes, new UpdateService(), alerts);
             _host.Tick += UpdateTrayTooltip;
+            _host.Tick += (snapshot, _) => alerts.Check(snapshot);
 
             CreateTray();
 

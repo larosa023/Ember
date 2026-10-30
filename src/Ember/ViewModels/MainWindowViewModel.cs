@@ -17,12 +17,12 @@ public partial class MainWindowViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(IsDashboard), nameof(IsProcesses), nameof(IsSensors), nameof(IsFans), nameof(IsStartup), nameof(IsSettings))]
     private ViewModelBase _currentPage;
 
-    public MainWindowViewModel(MonitorHost host, SettingsService settings, ThemeService themes, UpdateService updates)
+    public MainWindowViewModel(MonitorHost host, SettingsService settings, ThemeService themes, UpdateService updates, AlertService alerts)
     {
         _host = host;
         _settings = settings;
         _isSidebarCollapsed = settings.Current.SidebarCollapsed;
-        Settings = new SettingsViewModel(settings, themes, updates, host);
+        Settings = new SettingsViewModel(settings, themes, updates, host, alerts);
         Fans = new FansViewModel(settings, host);
         CpuDetail = new DetailViewModel(DetailKind.Cpu, () => CurrentPage = Dashboard);
         GpuDetail = new DetailViewModel(DetailKind.Gpu, () => CurrentPage = Dashboard);
@@ -135,6 +135,7 @@ public partial class MainWindowViewModel : ViewModelBase
         yield return () => CurrentPage = MemoryDetail;
         yield return () => IsSidebarCollapsed = !IsSidebarCollapsed;
         yield return () => IsSidebarCollapsed = !IsSidebarCollapsed;
+        yield return () => Settings.SendTestAlertCommand.Execute(null);
         yield return () => Navigate("dashboard");
     }
 
