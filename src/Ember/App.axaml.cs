@@ -80,6 +80,14 @@ public partial class App : Application
             };
 
             SingleInstance.ListenForShow(() => Dispatcher.UIThread.Post(ShowWindow));
+
+            // First run of a new version: refresh Windows' icon cache so the taskbar shows the current icon.
+            if (!Program.SmokeTest && _settings.Current.LastRunVersion != AppInfo.Version)
+            {
+                _settings.Current.LastRunVersion = AppInfo.Version;
+                _settings.Save();
+                _ = Task.Run(Native.RefreshIconCache);
+            }
             AutoStart.RefreshPath();
 
             _host.Start();

@@ -125,6 +125,34 @@ internal static class Native
         finally { CloseHandle(h); }
     }
 
+    // ---------- Icon cache ----------
+
+    [DllImport("shell32.dll")]
+    private static extern void SHChangeNotify(int eventId, uint flags, IntPtr item1, IntPtr item2);
+
+    /// <summary>
+    /// Ask Windows to refresh cached app icons (taskbar, Start menu). Needed after an update changes
+    /// the icon, because Windows caches icons by file path and the path stays the same.
+    /// </summary>
+    public static void RefreshIconCache()
+    {
+        try { SHChangeNotify(0x08000000 /* SHCNE_ASSOCCHANGED */, 0, IntPtr.Zero, IntPtr.Zero); } catch { }
+        try
+        {
+            var tool = Path.Combine(Environment.SystemDirectory, "ie4uinit.exe");
+            if (File.Exists(tool))
+            {
+                using var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(tool, "-show")
+                {
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                });
+                p?.WaitForExit(10_000);
+            }
+        }
+        catch { }
+    }
+
     // ---------- File properties dialog ----------
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]

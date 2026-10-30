@@ -78,6 +78,9 @@ public sealed class AppSettings
 
     public bool SidebarCollapsed { get; set; }
 
+    /// <summary>Version that last ran; used to do one-time work after an update.</summary>
+    public string LastRunVersion { get; set; } = "";
+
     // Temperature alerts (thresholds stored in °C)
     public bool AlertsEnabled { get; set; } = true;
     public double CpuAlertC { get; set; } = 95;
