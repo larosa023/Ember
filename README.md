@@ -9,7 +9,8 @@ Ember shows your CPU, GPU and memory at a glance (usage, temperatures, clocks, p
 ## Features
 
 - **Dashboard**: animated ring gauges and 60-second history graphs for CPU, GPU and RAM, with temps, clocks, power and VRAM
-- **Processes**: live CPU and memory per process, search by name or PID, sort any column, End task / End tree (or press `Delete`), Open file location
+- **Detail pages**: click the CPU, GPU or Memory card for a 2-minute graph, key stats, per-core usage and every sensor for that part
+- **Processes**: live CPU, GPU and memory per process, search by name or PID, sort any column, End task / End tree (or press `Delete`), Open file location
 - **Fans**: per-fan Auto (BIOS), fixed speed or a drag-to-edit curve linked to any temperature, with safety rails (minimum speed, 100% if the sensor drops out, fans handed back to BIOS when Ember exits)
 - **Sensors**: every sensor your hardware exposes (temps, fans, voltages, clocks, loads, power) with min and max
 - **Startup apps**: enable or disable apps that launch with Windows, same as Task Manager
@@ -95,7 +96,8 @@ src/Ember/
 - [x] Tray icon with live temps tooltip
 - [ ] Compact always-on-top overlay
 - [ ] Services page
-- [ ] Per-process GPU and disk usage
+- [x] Per-process GPU usage
+- [ ] Per-process disk usage
 - [x] Fan curves
 - [ ] GPU tuning (power limit, clocks)
 - [ ] Temperature alerts

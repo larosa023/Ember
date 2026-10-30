@@ -19,6 +19,7 @@ public sealed class ProcessService
     // Per-PID metadata, remembered with the process name so a reused PID gets looked up again.
     private readonly Dictionary<int, Meta> _meta = new();
     private readonly Dictionary<string, (IImage? Icon, string? Description)> _byPath = new(StringComparer.OrdinalIgnoreCase);
+    private readonly GpuProcessCounter _gpu = new();
     private IImage? _genericIcon;
     private bool _genericLoaded;
 
@@ -37,6 +38,10 @@ public sealed class ProcessService
         var now = Stopwatch.GetTimestamp();
         var elapsedMs = _lastTimestamp == 0 ? 0 : Stopwatch.GetElapsedTime(_lastTimestamp, now).TotalMilliseconds;
         var cores = Environment.ProcessorCount;
+
+        Dictionary<int, double> gpuByPid;
+        try { gpuByPid = _gpu.Read(); }
+        catch { gpuByPid = new Dictionary<int, double>(); }
 
         HashSet<int> withWindows;
         try { withWindows = Native.GetPidsWithWindows(); }
@@ -77,7 +82,7 @@ public sealed class ProcessService
                 catch { /* protected process: no access without admin */ }
 
                 var meta = GetMeta(pid, name);
-                result.Add(new ProcessInfo(pid, name, Math.Clamp(cpu, 0, 100), memory,
+                result.Add(new ProcessInfo(pid, name, Math.Clamp(cpu, 0, 100), memory, gpuByPid.GetValueOrDefault(pid),
                     meta.Path, meta.Icon, meta.Description, withWindows.Contains(pid), meta.IsWindows));
             }
         }

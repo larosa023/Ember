@@ -55,6 +55,7 @@ public partial class ProcessesViewModel : ViewModelBase
     public string NameHeader => Header("name", "Name");
     public string PidHeader => Header("pid", "PID");
     public string CpuHeader => Header("cpu", "CPU");
+    public string GpuHeader => Header("gpu", "GPU");
     public string MemoryHeader => Header("mem", "Memory");
 
     private string Header(string key, string label) =>
@@ -83,12 +84,13 @@ public partial class ProcessesViewModel : ViewModelBase
         else
         {
             SortKey = key;
-            _descending = key is "cpu" or "mem";
+            _descending = key is "cpu" or "mem" or "gpu";
         }
 
         OnPropertyChanged(nameof(NameHeader));
         OnPropertyChanged(nameof(PidHeader));
         OnPropertyChanged(nameof(CpuHeader));
+        OnPropertyChanged(nameof(GpuHeader));
         OnPropertyChanged(nameof(MemoryHeader));
         Refresh();
     }
@@ -188,6 +190,7 @@ public partial class ProcessesViewModel : ViewModelBase
             "name" => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase),
             "pid" => a.FirstPid.CompareTo(b.FirstPid),
             "mem" => a.Memory.CompareTo(b.Memory),
+            "gpu" => a.Gpu.CompareTo(b.Gpu),
             _ => a.Cpu.CompareTo(b.Cpu),
         };
         if (_descending) c = -c;
@@ -201,6 +204,7 @@ public partial class ProcessesViewModel : ViewModelBase
             "name" => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase),
             "pid" => a.Pid.CompareTo(b.Pid),
             "mem" => a.Memory.CompareTo(b.Memory),
+            "gpu" => a.Gpu.CompareTo(b.Gpu),
             _ => a.Cpu.CompareTo(b.Cpu),
         };
         if (_descending) c = -c;
@@ -334,6 +338,7 @@ public partial class ProcessGroup : ObservableObject
     public string? Path { get; private set; }
     public int FirstPid { get; private set; }
     public double Cpu { get; private set; }
+    public double Gpu { get; private set; }
     public long Memory { get; private set; }
 
     [ObservableProperty] private string _name = "";
@@ -341,6 +346,7 @@ public partial class ProcessGroup : ObservableObject
     [ObservableProperty] private string _cpuText = "";
     [ObservableProperty] private string _memoryText = "";
     [ObservableProperty] private string _pidText = "";
+    [ObservableProperty] private string _gpuText = "";
     [ObservableProperty] private string _countText = "";
 
     [ObservableProperty]
@@ -381,6 +387,8 @@ public partial class ProcessGroup : ObservableObject
         Cpu = Math.Min(procs.Sum(p => p.Cpu), 100);
         Memory = procs.Sum(p => p.Memory);
         CpuText = Cpu < 0.05 ? "0%" : $"{Cpu:0.0}%";
+        Gpu = Math.Min(procs.Sum(p => p.Gpu), 100);
+        GpuText = Gpu < 0.05 ? "0%" : $"{Gpu:0.0}%";
         MemoryText = Format.Bytes(Memory);
     }
 }
@@ -400,6 +408,8 @@ public partial class ProcessRow : ObservableObject
 
     [ObservableProperty] private double _cpu;
     [ObservableProperty] private long _memory;
+    [ObservableProperty] private double _gpu;
+    [ObservableProperty] private string _gpuText = "";
     [ObservableProperty] private string _cpuText = "";
     [ObservableProperty] private string _memoryText = "";
     [ObservableProperty] private IImage? _icon;
@@ -412,6 +422,8 @@ public partial class ProcessRow : ObservableObject
         Cpu = info.Cpu;
         Memory = info.Memory;
         CpuText = info.Cpu < 0.05 ? "0%" : $"{info.Cpu:0.0}%";
+        Gpu = info.Gpu;
+        GpuText = info.Gpu < 0.05 ? "0%" : $"{info.Gpu:0.0}%";
         MemoryText = Format.Bytes(info.Memory);
     }
 }

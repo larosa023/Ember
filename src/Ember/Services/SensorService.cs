@@ -147,7 +147,7 @@ public sealed class SensorService : IDisposable
     {
         var hwId = hw.Identifier.ToString();
         foreach (var s in hw.Sensors)
-            into.Add(new SensorReading(s.Identifier.ToString(), hw.Name, hwId, s.Name, s.SensorType, s.Value, s.Min, s.Max));
+            into.Add(new SensorReading(s.Identifier.ToString(), hw.Name, hwId, hw.HardwareType, s.Name, s.SensorType, s.Value, s.Min, s.Max));
         foreach (var sub in hw.SubHardware)
             Collect(sub, into);
     }

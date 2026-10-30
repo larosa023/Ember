@@ -14,6 +14,7 @@ public sealed class ViewLocator : IDataTemplate
         ProcessesViewModel => new ProcessesView(),
         SensorsViewModel => new SensorsView(),
         FansViewModel => new FansView(),
+        DetailViewModel => new DetailView(),
         StartupViewModel => new StartupView(),
         SettingsViewModel => new SettingsView(),
         _ => new TextBlock { Text = "Page not found" },

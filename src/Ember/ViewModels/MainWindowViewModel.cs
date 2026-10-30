@@ -21,6 +21,15 @@ public partial class MainWindowViewModel : ViewModelBase
         _host = host;
         Settings = new SettingsViewModel(settings, themes, updates, host);
         Fans = new FansViewModel(settings, host);
+        CpuDetail = new DetailViewModel(DetailKind.Cpu, () => CurrentPage = Dashboard);
+        GpuDetail = new DetailViewModel(DetailKind.Gpu, () => CurrentPage = Dashboard);
+        MemoryDetail = new DetailViewModel(DetailKind.Memory, () => CurrentPage = Dashboard);
+        Dashboard.OpenRequested += kind => CurrentPage = kind switch
+        {
+            DetailKind.Gpu => GpuDetail,
+            DetailKind.Memory => MemoryDetail,
+            _ => CpuDetail,
+        };
         _currentPage = Dashboard;
         _host.Tick += OnTick;
     }
@@ -31,8 +40,11 @@ public partial class MainWindowViewModel : ViewModelBase
     public StartupViewModel Startup { get; } = new();
     public SettingsViewModel Settings { get; }
     public FansViewModel Fans { get; }
+    public DetailViewModel CpuDetail { get; }
+    public DetailViewModel GpuDetail { get; }
+    public DetailViewModel MemoryDetail { get; }
 
-    public bool IsDashboard => CurrentPage == Dashboard;
+    public bool IsDashboard => CurrentPage == Dashboard || CurrentPage is DetailViewModel;
     public bool IsProcesses => CurrentPage == Processes;
     public bool IsSensors => CurrentPage == Sensors;
     public bool IsFans => CurrentPage == Fans;
@@ -84,6 +96,9 @@ public partial class MainWindowViewModel : ViewModelBase
             ShowDriverBanner = false;
 
         Dashboard.Update(snapshot);
+        CpuDetail.Update(snapshot);
+        GpuDetail.Update(snapshot);
+        MemoryDetail.Update(snapshot);
         Fans.Update(snapshot);
         Sensors.Update(snapshot.Sensors);
         Settings.UpdateGpuList(snapshot.GpuNames);

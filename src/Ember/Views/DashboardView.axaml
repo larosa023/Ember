@@ -10,13 +10,15 @@
 
       <StackPanel Spacing="2">
         <TextBlock Classes="h1" Text="Dashboard" />
-        <TextBlock Classes="label" Text="{Binding UptimeText}" />
+        <TextBlock Classes="label" Text="{Binding UptimeText, StringFormat='{}{0} · click a card for details'}" />
       </StackPanel>
 
       <Grid ColumnDefinitions="*,16,*,16,*">
 
         <!-- CPU -->
-        <Border Grid.Column="0" Classes="card">
+        <Button Grid.Column="0" Classes="tile" Command="{Binding OpenCommand}" CommandParameter="cpu"
+                ToolTip.Tip="Open details">
+        <Border Classes="card">
           <StackPanel Spacing="18">
             <StackPanel Spacing="4">
               <TextBlock Classes="eyebrow" Text="PROCESSOR" />
@@ -49,9 +51,12 @@
             <c:Sparkline Height="52" Values="{Binding CpuHistoryValues}" />
           </StackPanel>
         </Border>
+        </Button>
 
         <!-- GPU -->
-        <Border Grid.Column="2" Classes="card">
+        <Button Grid.Column="2" Classes="tile" Command="{Binding OpenCommand}" CommandParameter="gpu"
+                ToolTip.Tip="Open details">
+        <Border Classes="card">
           <StackPanel Spacing="18">
             <StackPanel Spacing="4">
               <TextBlock Classes="eyebrow" Text="GRAPHICS" />
@@ -84,9 +89,12 @@
             <c:Sparkline Height="52" Values="{Binding GpuHistoryValues}" />
           </StackPanel>
         </Border>
+        </Button>
 
         <!-- Memory -->
-        <Border Grid.Column="4" Classes="card">
+        <Button Grid.Column="4" Classes="tile" Command="{Binding OpenCommand}" CommandParameter="ram"
+                ToolTip.Tip="Open details">
+        <Border Classes="card">
           <StackPanel Spacing="18">
             <StackPanel Spacing="4">
               <TextBlock Classes="eyebrow" Text="MEMORY" />
@@ -119,6 +127,7 @@
             <c:Sparkline Height="52" Values="{Binding RamHistoryValues}" />
           </StackPanel>
         </Border>
+        </Button>
       </Grid>
     </StackPanel>
   </ScrollViewer>

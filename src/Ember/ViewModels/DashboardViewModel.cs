@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Ember.Models;
 
 namespace Ember.ViewModels;
@@ -36,6 +37,17 @@ public partial class DashboardViewModel : ViewModelBase
     [ObservableProperty] private double[] _ramHistoryValues = Array.Empty<double>();
 
     [ObservableProperty] private string _uptimeText = "";
+
+    /// <summary>Raised when a CPU / GPU / Memory card is clicked.</summary>
+    public event Action<DetailKind>? OpenRequested;
+
+    [RelayCommand]
+    private void Open(string kind) => OpenRequested?.Invoke(kind switch
+    {
+        "gpu" => DetailKind.Gpu,
+        "ram" => DetailKind.Memory,
+        _ => DetailKind.Cpu,
+    });
 
     public void Update(HardwareSnapshot s)
     {

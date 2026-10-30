@@ -1,0 +1,123 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Ember.ViewModels"
+             xmlns:c="using:Ember.Controls"
+             x:Class="Ember.Views.DetailView"
+             x:DataType="vm:DetailViewModel">
+
+  <ScrollViewer>
+    <StackPanel Spacing="18">
+
+      <Button Classes="back" Command="{Binding BackCommand}" HorizontalAlignment="Left">
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <TextBlock Classes="icon" FontSize="12" Text="&#xE72B;" />
+          <TextBlock Text="Dashboard" />
+        </StackPanel>
+      </Button>
+
+      <!-- Big graph -->
+      <Border Classes="card">
+        <StackPanel Spacing="14">
+          <DockPanel>
+            <StackPanel DockPanel.Dock="Right" HorizontalAlignment="Right">
+              <TextBlock Classes="big" HorizontalAlignment="Right" Text="{Binding Headline}" />
+              <TextBlock Classes="label" HorizontalAlignment="Right" Text="{Binding GraphLabel}" />
+            </StackPanel>
+            <StackPanel Spacing="4" VerticalAlignment="Center">
+              <TextBlock Classes="eyebrow" Text="{Binding Title}" />
+              <TextBlock Classes="h1" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+          </DockPanel>
+          <Border Background="{DynamicResource SurfaceAlt}" CornerRadius="10" Padding="0,8,0,0" ClipToBounds="True">
+            <c:Sparkline Height="190" Values="{Binding History}" />
+          </Border>
+        </StackPanel>
+      </Border>
+
+      <!-- Key stats -->
+      <ItemsControl ItemsSource="{Binding Stats}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel ItemSpacing="12" LineSpacing="12" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:StatTile">
+            <Border Classes="card" Width="190" Padding="16,14">
+              <StackPanel Spacing="4">
+                <TextBlock Classes="label" Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Classes="stat" FontSize="18" Text="{Binding Value}" TextTrimming="CharacterEllipsis" />
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <!-- Per-core (CPU only) -->
+      <Border Classes="card" IsVisible="{Binding ShowCores}">
+        <StackPanel Spacing="12">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Right" Classes="label" Text="{Binding CoresSummary}" VerticalAlignment="Center" />
+            <TextBlock Classes="eyebrow" Text="CORES" />
+          </DockPanel>
+          <ItemsControl ItemsSource="{Binding Cores}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel ItemSpacing="10" LineSpacing="10" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:CoreTile">
+                <Border Width="128" Padding="12,10" CornerRadius="10" Background="{DynamicResource SurfaceAlt}">
+                  <StackPanel Spacing="6">
+                    <DockPanel>
+                      <TextBlock DockPanel.Dock="Right" FontWeight="SemiBold" Text="{Binding LoadText}" />
+                      <TextBlock Classes="label" Text="{Binding Name}" />
+                    </DockPanel>
+                    <ProgressBar Classes="core" Minimum="0" Maximum="100" Value="{Binding Load}" />
+                    <TextBlock Classes="label" FontSize="11" Text="{Binding ClockText}" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <!-- Every sensor for this part, grouped by type -->
+      <ItemsControl ItemsSource="{Binding Groups}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Spacing="16" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:SensorGroup">
+            <Border Classes="card">
+              <StackPanel Spacing="10">
+                <Grid ColumnDefinitions="*,110,110,110">
+                  <TextBlock Grid.Column="0" Classes="eyebrow" Text="{Binding Name}" />
+                  <TextBlock Grid.Column="1" Classes="eyebrow" Text="NOW" HorizontalAlignment="Right" />
+                  <TextBlock Grid.Column="2" Classes="eyebrow" Text="MIN" HorizontalAlignment="Right" />
+                  <TextBlock Grid.Column="3" Classes="eyebrow" Text="MAX" HorizontalAlignment="Right" />
+                </Grid>
+                <ItemsControl ItemsSource="{Binding Rows}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:SensorRow">
+                      <Grid ColumnDefinitions="*,110,110,110" Margin="0,4">
+                        <TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Column="1" Text="{Binding Value}" FontWeight="SemiBold" HorizontalAlignment="Right" />
+                        <TextBlock Grid.Column="2" Classes="label" Text="{Binding Min}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="3" Classes="label" Text="{Binding Max}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

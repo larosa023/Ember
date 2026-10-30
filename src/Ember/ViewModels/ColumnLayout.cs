@@ -14,6 +14,7 @@ public partial class ColumnLayout : ObservableObject
         ["name"] = (340, 140),
         ["pid"] = (64, 40),
         ["cpu"] = (70, 44),
+        ["gpu"] = (64, 44),
         ["mem"] = (90, 56),
     };
 
@@ -25,6 +26,7 @@ public partial class ColumnLayout : ObservableObject
     [ObservableProperty] private double _nameWidth = Limits["name"].Default;
     [ObservableProperty] private double _pidWidth = Limits["pid"].Default;
     [ObservableProperty] private double _cpuWidth = Limits["cpu"].Default;
+    [ObservableProperty] private double _gpuWidth = Limits["gpu"].Default;
     [ObservableProperty] private double _memWidth = Limits["mem"].Default;
 
     public void Attach(SettingsService settings)
@@ -39,6 +41,7 @@ public partial class ColumnLayout : ObservableObject
         "name" => NameWidth,
         "pid" => PidWidth,
         "cpu" => CpuWidth,
+        "gpu" => GpuWidth,
         "mem" => MemWidth,
         _ => 0,
     };
@@ -52,6 +55,7 @@ public partial class ColumnLayout : ObservableObject
             case "name": NameWidth = width; break;
             case "pid": PidWidth = width; break;
             case "cpu": CpuWidth = width; break;
+            case "gpu": GpuWidth = width; break;
             case "mem": MemWidth = width; break;
         }
     }
@@ -70,6 +74,7 @@ public partial class ColumnLayout : ObservableObject
             ["name"] = NameWidth,
             ["pid"] = PidWidth,
             ["cpu"] = CpuWidth,
+            ["gpu"] = GpuWidth,
             ["mem"] = MemWidth,
         };
         _settings.Save();

@@ -54,6 +54,13 @@
           </c:ColumnResizer>
 
           <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch"
+                  Width="{ReflectionBinding GpuWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                  Content="{Binding GpuHeader}" Command="{Binding SortCommand}" CommandParameter="gpu" />
+          <c:ColumnResizer Column="gpu">
+            <Border Classes="divider" />
+          </c:ColumnResizer>
+
+          <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch"
                   Width="{ReflectionBinding MemWidth, Source={x:Static vm:ColumnLayout.Instance}}"
                   Content="{Binding MemoryHeader}" Command="{Binding SortCommand}" CommandParameter="mem" />
           <c:ColumnResizer Column="mem">
@@ -99,6 +106,9 @@
                            Width="{ReflectionBinding CpuWidth, Source={x:Static vm:ColumnLayout.Instance}}"
                            Text="{Binding CpuText}" />
                 <TextBlock TextAlignment="Right" VerticalAlignment="Center"
+                           Width="{ReflectionBinding GpuWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                           Text="{Binding GpuText}" />
+                <TextBlock TextAlignment="Right" VerticalAlignment="Center"
                            Width="{ReflectionBinding MemWidth, Source={x:Static vm:ColumnLayout.Instance}}"
                            Text="{Binding MemoryText}" />
               </StackPanel>
@@ -118,6 +128,9 @@
                 <TextBlock Classes="label" FontSize="13" TextAlignment="Right" VerticalAlignment="Center"
                            Width="{ReflectionBinding CpuWidth, Source={x:Static vm:ColumnLayout.Instance}}"
                            Text="{Binding CpuText}" />
+                <TextBlock Classes="label" FontSize="13" TextAlignment="Right" VerticalAlignment="Center"
+                           Width="{ReflectionBinding GpuWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                           Text="{Binding GpuText}" />
                 <TextBlock Classes="label" FontSize="13" TextAlignment="Right" VerticalAlignment="Center"
                            Width="{ReflectionBinding MemWidth, Source={x:Static vm:ColumnLayout.Instance}}"
                            Text="{Binding MemoryText}" />

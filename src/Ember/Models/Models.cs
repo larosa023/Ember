@@ -7,6 +7,7 @@ public sealed record SensorReading(
     string Id,
     string Hardware,
     string HardwareId,
+    HardwareType HardwareType,
     string Name,
     SensorType Type,
     float? Value,
@@ -33,7 +34,7 @@ public sealed record HardwareSnapshot(
 }
 
 public sealed record ProcessInfo(
-    int Pid, string Name, double Cpu, long Memory,
+    int Pid, string Name, double Cpu, long Memory, double Gpu,
     string? Path, IImage? Icon, string? Description,
     bool HasWindow, bool IsWindows);
 
