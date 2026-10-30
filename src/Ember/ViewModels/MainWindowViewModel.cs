@@ -14,11 +14,13 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly SettingsService _settings;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsDashboard), nameof(IsProcesses), nameof(IsSensors), nameof(IsFans), nameof(IsStartup), nameof(IsSettings))]
+    [NotifyPropertyChangedFor(nameof(IsDashboard), nameof(IsProcesses), nameof(IsSensors), nameof(IsHistory), nameof(IsFans), nameof(IsStartup), nameof(IsSettings))]
     private ViewModelBase _currentPage;
 
-    public MainWindowViewModel(MonitorHost host, SettingsService settings, ThemeService themes, UpdateService updates, AlertService alerts)
+    public MainWindowViewModel(MonitorHost host, SettingsService settings, ThemeService themes, UpdateService updates,
+        AlertService alerts, HistoryService history)
     {
+        History = new HistoryViewModel(history);
         _host = host;
         _settings = settings;
         _isSidebarCollapsed = settings.Current.SidebarCollapsed;
@@ -47,6 +49,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public StartupViewModel Startup { get; } = new();
     public SettingsViewModel Settings { get; }
     public FansViewModel Fans { get; }
+    public HistoryViewModel History { get; }
     public DetailViewModel CpuDetail { get; }
     public DetailViewModel GpuDetail { get; }
     public DetailViewModel MemoryDetail { get; }
@@ -57,6 +60,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool IsProcesses => CurrentPage == Processes;
     public bool IsSensors => CurrentPage == Sensors;
     public bool IsFans => CurrentPage == Fans;
+    public bool IsHistory => CurrentPage == History;
     public bool IsStartup => CurrentPage == Startup;
     public bool IsSettings => CurrentPage == Settings;
 
@@ -127,6 +131,7 @@ public partial class MainWindowViewModel : ViewModelBase
         MemoryDetail.Update(snapshot);
         StorageDetail.Update(snapshot);
         NetworkDetail.Update(snapshot);
+        if (CurrentPage == History) History.RefreshIfChanged();
         Fans.Update(snapshot);
         Sensors.Update(snapshot.Sensors);
         Settings.UpdateGpuList(snapshot.GpuNames);
@@ -136,7 +141,7 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <summary>Visits every page once; used by the release build's smoke test.</summary>
     public IEnumerable<Action> SmokeTestSteps()
     {
-        foreach (var page in new[] { "processes", "sensors", "fans", "startup", "settings", "dashboard" })
+        foreach (var page in new[] { "processes", "sensors", "history", "fans", "startup", "settings", "dashboard" })
             yield return () => Navigate(page);
         yield return () => CurrentPage = CpuDetail;
         yield return () => CurrentPage = GpuDetail;
@@ -157,6 +162,7 @@ public partial class MainWindowViewModel : ViewModelBase
             "processes" => Processes,
             "sensors" => Sensors,
             "fans" => Fans,
+            "history" => History,
             "startup" => Startup,
             "settings" => Settings,
             _ => Dashboard,
@@ -168,6 +174,7 @@ public partial class MainWindowViewModel : ViewModelBase
         // Only pay for process sampling while the Processes page is open.
         _host.SampleProcesses = value == Processes;
         if (value == Startup && Startup.Items.Count == 0) Startup.Refresh();
+        if (value == History) History.Refresh();
     }
 
     [RelayCommand]

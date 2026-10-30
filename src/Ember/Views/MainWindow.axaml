@@ -116,6 +116,13 @@
               <TextBlock Classes="navlabel" Text="Sensors" />
             </StackPanel>
           </Button>
+          <Button Classes="nav" Classes.active="{Binding IsHistory}" Tag="History"
+                  Command="{Binding NavigateCommand}" CommandParameter="history">
+            <StackPanel Orientation="Horizontal" Spacing="14">
+              <TextBlock Classes="icon" Text="&#xE81C;" />
+              <TextBlock Classes="navlabel" Text="History" />
+            </StackPanel>
+          </Button>
           <Button Classes="nav" Classes.active="{Binding IsFans}" Tag="Fans"
                   Command="{Binding NavigateCommand}" CommandParameter="fans">
             <StackPanel Orientation="Horizontal" Spacing="14">

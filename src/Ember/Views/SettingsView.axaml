@@ -118,6 +118,33 @@
         </StackPanel>
       </Border>
 
+      <!-- History -->
+      <TextBlock Classes="eyebrow" Text="HISTORY" Margin="4,16,4,0" />
+      <Border Classes="card" Padding="20,2">
+        <StackPanel>
+          <Border Classes="row">
+            <DockPanel>
+              <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding HistoryToDisk}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Save history to disk" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap"
+                           Text="Daily CSV logs you can open in Excel. Off keeps the last 24 hours in memory only." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
+          <Border Classes="row" IsEnabled="{Binding HistoryToDisk}">
+            <DockPanel>
+              <ComboBox DockPanel.Dock="Right" Width="220" VerticalAlignment="Center"
+                        ItemsSource="{Binding RetentionOptions}" SelectedItem="{Binding SelectedRetention}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Keep logs for" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="Older log files are deleted automatically. About 1 MB per day." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
+        </StackPanel>
+      </Border>
+
       <!-- Startup & tray -->
       <TextBlock Classes="eyebrow" Text="STARTUP &amp; TRAY" Margin="4,16,4,0" />
       <Border Classes="card" Padding="20,2">

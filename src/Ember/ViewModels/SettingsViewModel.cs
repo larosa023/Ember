@@ -13,6 +13,11 @@ public sealed record RefreshOption(int Ms, string Label)
     public override string ToString() => Label;
 }
 
+public sealed record RetentionOption(int Days, string Label)
+{
+    public override string ToString() => Label;
+}
+
 public partial class SettingsViewModel : ViewModelBase
 {
     private const string AutoGpu = "Automatic (discrete first)";
@@ -34,6 +39,8 @@ public partial class SettingsViewModel : ViewModelBase
         _alertsEnabled = settings.Current.AlertsEnabled;
         _cpuAlert = settings.Current.CpuAlertC;
         _gpuAlert = settings.Current.GpuAlertC;
+        _historyToDisk = settings.Current.HistoryToDisk;
+        _selectedRetention = RetentionOptions.FirstOrDefault(o => o.Days == settings.Current.HistoryDays) ?? RetentionOptions[1];
         _themes = themes;
         _updates = updates;
         _host = host;
@@ -168,6 +175,31 @@ public partial class SettingsViewModel : ViewModelBase
 
     [RelayCommand]
     private void SendTestAlert() => _alerts.ShowTest();
+
+    // ---------- History ----------
+
+    public IReadOnlyList<RetentionOption> RetentionOptions { get; } =
+    [
+        new(1, "1 day"),
+        new(7, "7 days"),
+        new(30, "30 days"),
+    ];
+
+    [ObservableProperty] private bool _historyToDisk;
+    [ObservableProperty] private RetentionOption _selectedRetention;
+
+    partial void OnHistoryToDiskChanged(bool value)
+    {
+        _settings.Current.HistoryToDisk = value;
+        _settings.Save();
+    }
+
+    partial void OnSelectedRetentionChanged(RetentionOption value)
+    {
+        if (value is null) return;
+        _settings.Current.HistoryDays = value.Days;
+        _settings.Save();
+    }
 
     partial void OnSelectedGpuChanged(string? value)
     {

@@ -339,6 +339,26 @@
     <Setter Property="Opacity" Value="0.75" />
   </Style>
 
+  <Style Selector="c|HistoryChart">
+    <Setter Property="Brush1" Value="{DynamicResource Accent}" />
+    <Setter Property="Brush2" Value="{DynamicResource Series2}" />
+    <Setter Property="Brush3" Value="{DynamicResource Series3}" />
+    <Setter Property="FillBrush" Value="{DynamicResource AccentSoft}" />
+    <Setter Property="GridBrush" Value="{DynamicResource Stroke}" />
+    <Setter Property="LabelBrush" Value="{DynamicResource TextMuted}" />
+    <Setter Property="TextBrush" Value="{DynamicResource Text}" />
+    <Setter Property="PanelBrush" Value="{DynamicResource SurfaceAlt}" />
+  </Style>
+  <Style Selector="Ellipse.legend">
+    <Setter Property="Fill" Value="{DynamicResource Accent}" />
+  </Style>
+  <Style Selector="Ellipse.legend.s2">
+    <Setter Property="Fill" Value="{DynamicResource Series2}" />
+  </Style>
+  <Style Selector="Ellipse.legend.s3">
+    <Setter Property="Fill" Value="{DynamicResource Series3}" />
+  </Style>
+
   <Style Selector="c|CurveEditor">
     <Setter Property="LineBrush" Value="{DynamicResource Accent}" />
     <Setter Property="FillBrush" Value="{DynamicResource AccentSoft}" />

@@ -47,6 +47,9 @@ public sealed class MonitorHost : IDisposable
 
     public FanController Fans => _sensors.Fans;
 
+    /// <summary>Set before Start(); samples are recorded on the monitor thread.</summary>
+    public HistoryService? History { get; set; }
+
     public void Start() => _loop = Task.Run(LoopAsync);
 
     private async Task LoopAsync()
@@ -66,6 +69,9 @@ public sealed class MonitorHost : IDisposable
 
             try { snapshot = _system.Enrich(snapshot); }
             catch (Exception ex) { Trace.WriteLine($"System info failed: {ex}"); }
+
+            try { History?.Record(snapshot); }
+            catch (Exception ex) { Trace.WriteLine($"History failed: {ex}"); }
 
             IReadOnlyList<ProcessInfo>? processes = null;
             if (_sampleProcesses)

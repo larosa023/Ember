@@ -1,0 +1,81 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Ember.ViewModels"
+             xmlns:c="using:Ember.Controls"
+             x:Class="Ember.Views.HistoryView"
+             x:DataType="vm:HistoryViewModel">
+
+  <DockPanel>
+    <StackPanel DockPanel.Dock="Top" Classes="pageheader">
+      <TextBlock Classes="h1" Text="History" />
+      <TextBlock Classes="subtitle" Text="{Binding Summary}" />
+    </StackPanel>
+
+    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+        <Button Classes="ghost" Command="{Binding OpenLogsFolderCommand}">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Classes="icon" FontSize="13" Text="&#xE838;" />
+            <TextBlock Text="Logs folder" />
+          </StackPanel>
+        </Button>
+        <Button Classes="ghost" Command="{Binding ExportCommand}">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Classes="icon" FontSize="13" Text="&#xEDE1;" />
+            <TextBlock Text="Export CSV" />
+          </StackPanel>
+        </Button>
+      </StackPanel>
+      <ComboBox Width="200" ItemsSource="{Binding Ranges}" SelectedItem="{Binding SelectedRange}" />
+    </DockPanel>
+
+    <TextBlock DockPanel.Dock="Bottom" Classes="label" Margin="4,10,0,0" Text="{Binding Status}"
+               IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+    <ScrollViewer>
+      <StackPanel Spacing="12">
+        <Border Classes="card" IsVisible="{Binding IsEmpty}">
+          <TextBlock Classes="label" TextWrapping="Wrap"
+                     Text="Ember records a reading every 5 seconds while it's running, including from the tray. Check back in a minute." />
+        </Border>
+
+        <ItemsControl ItemsSource="{Binding Charts}" IsVisible="{Binding !IsEmpty}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Spacing="12" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:ChartCard">
+              <Border Classes="card" IsVisible="{Binding HasData}" Padding="20,16">
+                <StackPanel Spacing="10">
+                  <DockPanel>
+                    <ItemsControl DockPanel.Dock="Right" ItemsSource="{Binding Legend}" VerticalAlignment="Center">
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                          <StackPanel Orientation="Horizontal" Spacing="18" />
+                        </ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:LegendItem">
+                          <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Ellipse Classes="legend" Classes.s2="{Binding IsSecond}" Classes.s3="{Binding IsThird}"
+                                     Width="8" Height="8" VerticalAlignment="Center" />
+                            <TextBlock FontWeight="SemiBold" FontSize="12" Text="{Binding Name}" />
+                            <TextBlock Classes="label" Text="{Binding Stats}" />
+                          </StackPanel>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Classes="h2" Text="{Binding Title}" VerticalAlignment="Center" />
+                  </DockPanel>
+                  <c:HistoryChart Height="170" Data="{Binding Data}" />
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </ScrollViewer>
+  </DockPanel>
+</UserControl>

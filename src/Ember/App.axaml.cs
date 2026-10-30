@@ -24,6 +24,10 @@ public partial class App : Application
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
+    /// <summary>The main window (null while Ember is only in the tray).</summary>
+    public static Window? MainWindowInstance =>
+        (Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+
     /// <summary>The main window's clipboard (null while Ember is only in the tray).</summary>
     public static Avalonia.Input.Platform.IClipboard? Clipboard =>
         (Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow?.Clipboard;
@@ -42,14 +46,16 @@ public partial class App : Application
             Format.UseFahrenheit = _settings.Current.UseFahrenheit;
             ColumnLayout.Instance.Attach(_settings);
 
+            var history = new HistoryService(_settings);
             _host = new MonitorHost(new SensorService(), new ProcessService())
             {
                 IntervalMs = _settings.Current.RefreshMs,
                 PreferredGpu = _settings.Current.PreferredGpu,
+                History = history,
             };
 
             var alerts = new AlertService(_settings, ShowWindow);
-            _vm = new MainWindowViewModel(_host, _settings, themes, new UpdateService(), alerts);
+            _vm = new MainWindowViewModel(_host, _settings, themes, new UpdateService(), alerts, history);
             _host.Tick += UpdateTrayTooltip;
             _host.Tick += (snapshot, _) => alerts.Check(snapshot);
 
@@ -64,6 +70,7 @@ public partial class App : Application
             desktop.Exit += (_, _) =>
             {
                 _host.Dispose();
+                history.Dispose();
                 _tray?.Dispose();
             };
 

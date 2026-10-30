@@ -78,6 +78,10 @@ public sealed class AppSettings
     public bool AlertsEnabled { get; set; } = true;
     public double CpuAlertC { get; set; } = 95;
     public double GpuAlertC { get; set; } = 85;
+
+    // History
+    public bool HistoryToDisk { get; set; } = true;
+    public int HistoryDays { get; set; } = 7;
 }
 
 /// <summary>A color theme. Built-ins live in ThemeService; users can drop JSON files in %AppData%\Ember\themes.</summary>
