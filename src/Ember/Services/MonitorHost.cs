@@ -12,6 +12,7 @@ public sealed class MonitorHost : IDisposable
 {
     private readonly SensorService _sensors;
     private readonly ProcessService _processes;
+    private readonly SystemInfoService _system = new();
     private readonly CancellationTokenSource _cts = new();
     private volatile int _intervalMs = 1000;
     private volatile bool _sampleProcesses;
@@ -62,6 +63,9 @@ public sealed class MonitorHost : IDisposable
                 Trace.WriteLine($"Sensor read failed: {ex}");
                 snapshot = HardwareSnapshot.Empty;
             }
+
+            try { snapshot = _system.Enrich(snapshot); }
+            catch (Exception ex) { Trace.WriteLine($"System info failed: {ex}"); }
 
             IReadOnlyList<ProcessInfo>? processes = null;
             if (_sampleProcesses)

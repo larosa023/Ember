@@ -21,18 +21,21 @@ public sealed class ThemeService
             Name = "Midnight",
             Background = "#0B1020", Surface = "#121A2E", SurfaceAlt = "#18223A", Stroke = "#223049",
             Text = "#E8EEFC", TextMuted = "#7C8AA8", Accent = "#4CC9F0", OnAccent = "#06121A",
+            Series2 = "#FF8A5B", Series3 = "#A78BFA",
         },
         new()
         {
             Name = "Aurora",
             Background = "#0E0B16", Surface = "#161224", SurfaceAlt = "#1E1830", Stroke = "#2A2240",
             Text = "#EEEAF8", TextMuted = "#8C84A3", Accent = "#A78BFA", OnAccent = "#140D24",
+            Series2 = "#4CC9F0", Series3 = "#3DDC97",
         },
         new()
         {
             Name = "Graphite",
             Background = "#0E0E0E", Surface = "#171717", SurfaceAlt = "#202020", Stroke = "#2A2A2A",
             Text = "#FAFAFA", TextMuted = "#8C8C8C", Accent = "#EDEDED", OnAccent = "#111111",
+            Series2 = "#8C8C8C", Series3 = "#5A5A5A",
         },
         new()
         {
@@ -40,6 +43,7 @@ public sealed class ThemeService
             Background = "#F4F4F6", Surface = "#FFFFFF", SurfaceAlt = "#EEEEF2", Stroke = "#E2E2E8",
             Text = "#15151A", TextMuted = "#6B6B78", Accent = "#F2561D", OnAccent = "#FFFFFF",
             Good = "#12A66A", Warn = "#D98A00", Hot = "#E03131",
+            Series2 = "#1C8FD6", Series3 = "#7C5CE0",
         },
     ];
 
@@ -77,6 +81,8 @@ public sealed class ThemeService
         r["Good"] = Brush(t.Good, fallback.Good);
         r["Warn"] = Brush(t.Warn, fallback.Warn);
         r["Hot"] = Brush(t.Hot, fallback.Hot);
+        r["Series2"] = Brush(t.Series2, fallback.Series2);
+        r["Series3"] = Brush(t.Series3, fallback.Series3);
 
         var accent = Parse(t.Accent, fallback.Accent);
         r["Accent"] = new SolidColorBrush(accent);

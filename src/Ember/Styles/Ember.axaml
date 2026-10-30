@@ -315,6 +315,30 @@
       </Transitions>
     </Setter>
   </Style>
+  <Style Selector="c|UsageBar.full">
+    <Setter Property="FillBrush" Value="{DynamicResource Hot}" />
+  </Style>
+  <Style Selector="c|Sparkline">
+    <Setter Property="Stroke2" Value="{DynamicResource Series2}" />
+  </Style>
+
+  <!-- Status pills and dots -->
+  <Style Selector="Border.pill.accent">
+    <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
+  </Style>
+  <Style Selector="Ellipse.dot">
+    <Setter Property="Fill" Value="{DynamicResource Good}" />
+  </Style>
+  <Style Selector="Ellipse.dot.bad">
+    <Setter Property="Fill" Value="{DynamicResource Hot}" />
+  </Style>
+  <Style Selector="Ellipse.dot.off">
+    <Setter Property="Fill" Value="{DynamicResource TextMuted}" />
+  </Style>
+  <Style Selector="Border.card.muted">
+    <Setter Property="Opacity" Value="0.75" />
+  </Style>
+
   <Style Selector="c|CurveEditor">
     <Setter Property="LineBrush" Value="{DynamicResource Accent}" />
     <Setter Property="FillBrush" Value="{DynamicResource AccentSoft}" />

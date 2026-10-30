@@ -34,6 +34,23 @@ public static class Format
         return i <= 1 ? $"{v:0} {units[i]}" : $"{v:0.0} {units[i]}";
     }
 
+    /// <summary>Network rate in bits per second, the way ISPs quote it (Mbps).</summary>
+    public static string NetRate(double bytesPerSecond)
+    {
+        var bits = bytesPerSecond * 8;
+        return bits >= 1e9 ? $"{bits / 1e9:0.00} Gbps"
+            : bits >= 1e6 ? $"{bits / 1e6:0.0} Mbps"
+            : bits >= 1e3 ? $"{bits / 1e3:0} Kbps"
+            : $"{bits:0} bps";
+    }
+
+    public static string LinkSpeed(long bps) =>
+        bps <= 0 ? Dash : bps >= 1_000_000_000 ? $"{bps / 1e9:0.#} Gbps" : $"{bps / 1e6:0} Mbps";
+
+    /// <summary>Disk transfer rate (bytes per second).</summary>
+    public static string DiskRate(double bytesPerSecond) =>
+        bytesPerSecond < 1024 ? "0 MB/s" : Bytes((long)bytesPerSecond) + "/s";
+
     public static string Uptime(TimeSpan t) =>
         t.TotalDays >= 1 ? $"{(int)t.TotalDays}d {t.Hours}h {t.Minutes}m"
         : t.TotalHours >= 1 ? $"{t.Hours}h {t.Minutes}m"

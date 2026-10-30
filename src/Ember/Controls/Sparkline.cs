@@ -19,15 +19,24 @@ public class Sparkline : Control
     public static readonly StyledProperty<IBrush?> FillProperty =
         AvaloniaProperty.Register<Sparkline, IBrush?>(nameof(Fill));
 
+    /// <summary>Optional second series (drawn as a line only), e.g. upload next to download.</summary>
+    public static readonly StyledProperty<double[]?> Values2Property =
+        AvaloniaProperty.Register<Sparkline, double[]?>(nameof(Values2));
+
+    public static readonly StyledProperty<IBrush?> Stroke2Property =
+        AvaloniaProperty.Register<Sparkline, IBrush?>(nameof(Stroke2));
+
     static Sparkline()
     {
-        AffectsRender<Sparkline>(ValuesProperty, MaximumProperty, StrokeProperty, FillProperty);
+        AffectsRender<Sparkline>(ValuesProperty, MaximumProperty, StrokeProperty, FillProperty, Values2Property, Stroke2Property);
     }
 
     public double[]? Values { get => GetValue(ValuesProperty); set => SetValue(ValuesProperty, value); }
     public double Maximum { get => GetValue(MaximumProperty); set => SetValue(MaximumProperty, value); }
     public IBrush? Stroke { get => GetValue(StrokeProperty); set => SetValue(StrokeProperty, value); }
     public IBrush? Fill { get => GetValue(FillProperty); set => SetValue(FillProperty, value); }
+    public double[]? Values2 { get => GetValue(Values2Property); set => SetValue(Values2Property, value); }
+    public IBrush? Stroke2 { get => GetValue(Stroke2Property); set => SetValue(Stroke2Property, value); }
 
     public override void Render(DrawingContext context)
     {
@@ -62,6 +71,20 @@ public class Sparkline : Control
                 g.EndFigure(false);
             }
             context.DrawGeometry(null, new Pen(stroke, 2, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round), line);
+        }
+
+        var second = Values2;
+        if (second is { Length: > 1 } && Stroke2 is { } stroke2)
+        {
+            var step2 = w / (second.Length - 1);
+            var line2 = new StreamGeometry();
+            using (var g = line2.Open())
+            {
+                g.BeginFigure(new Point(0, Y(second[0])), false);
+                for (int i = 1; i < second.Length; i++) g.LineTo(new Point(i * step2, Y(second[i])));
+                g.EndFigure(false);
+            }
+            context.DrawGeometry(null, new Pen(stroke2, 1.6, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round), line2);
         }
     }
 }

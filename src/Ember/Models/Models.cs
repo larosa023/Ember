@@ -31,7 +31,23 @@ public sealed record HardwareSnapshot(
         Array.Empty<string>(),
         Array.Empty<SensorReading>(),
         Array.Empty<FanChannel>());
+
+    // Filled in by SystemInfoService after the sensor read.
+    public IReadOnlyList<VolumeInfo> Volumes { get; init; } = Array.Empty<VolumeInfo>();
+    public IReadOnlyList<DiskInfo> Disks { get; init; } = Array.Empty<DiskInfo>();
+    public IReadOnlyList<NetAdapterInfo> Network { get; init; } = Array.Empty<NetAdapterInfo>();
 }
+
+/// <summary>A drive letter (C:, D:, ...). DiskIndex links it to the physical disk it lives on.</summary>
+public sealed record VolumeInfo(string Letter, string Label, string Format, long Total, long Free, int? DiskIndex);
+
+/// <summary>A physical disk as Windows reports it (no admin needed). Sensors come from LHM by Index.</summary>
+public sealed record DiskInfo(int Index, string Model, string Kind, long Size, string Health);
+
+public sealed record NetAdapterInfo(
+    string Id, string Name, string Description, string Kind,
+    bool IsVirtual, bool IsPrimary, long LinkBps, string? Ipv4,
+    double DownBps, double UpBps, long TotalDown, long TotalUp);
 
 public sealed record ProcessInfo(
     int Pid, string Name, double Cpu, long Memory, double Gpu,
@@ -80,6 +96,10 @@ public sealed class ThemeDefinition
     public string Good { get; set; } = "#3DDC97";
     public string Warn { get; set; } = "#FFB020";
     public string Hot { get; set; } = "#FF4D4F";
+
+    /// <summary>Extra chart colors (second / third line on graphs).</summary>
+    public string Series2 { get; set; } = "#4CC9F0";
+    public string Series3 { get; set; } = "#A78BFA";
 }
 
 /// <summary>A controllable fan found by LibreHardwareMonitor (motherboard header or GPU).</summary>

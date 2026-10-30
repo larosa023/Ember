@@ -1,0 +1,104 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Ember.ViewModels"
+             xmlns:c="using:Ember.Controls"
+             x:Class="Ember.Views.StorageView"
+             x:DataType="vm:StorageViewModel">
+
+  <UserControl.DataTemplates>
+    <!-- A drive letter with its usage bar -->
+    <DataTemplate DataType="vm:VolumeRow" x:DataType="vm:VolumeRow">
+      <Border Classes="row compact">
+        <StackPanel Spacing="6">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Right" Classes="label" Text="{Binding FreeText}" VerticalAlignment="Center" />
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <TextBlock Text="{Binding Letter}" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding Label}" />
+              <TextBlock Classes="label" Text="{Binding Detail}" VerticalAlignment="Center" />
+            </StackPanel>
+          </DockPanel>
+          <c:UsageBar Height="6" Value="{Binding Percent}" Classes.full="{Binding IsNearlyFull}" />
+          <TextBlock Classes="label" FontSize="11" Text="{Binding UsedText}" />
+        </StackPanel>
+      </Border>
+    </DataTemplate>
+  </UserControl.DataTemplates>
+
+  <ScrollViewer>
+    <StackPanel Spacing="14">
+      <Button Classes="ghost" Command="{Binding BackCommand}" HorizontalAlignment="Left" Margin="-10,-6,0,-4">
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <TextBlock Classes="icon" FontSize="12" Text="&#xE72B;" />
+          <TextBlock Text="Dashboard" />
+        </StackPanel>
+      </Button>
+
+      <StackPanel Classes="pageheader" Margin="0,0,0,6">
+        <TextBlock Classes="h1" Text="Storage" />
+        <TextBlock Classes="subtitle" Text="{Binding Summary}" />
+      </StackPanel>
+
+      <Border Classes="banner" IsVisible="{Binding ShowAdminNote}">
+        <TextBlock TextWrapping="Wrap" FontSize="13"
+                   Text="Drive temperatures, life remaining and activity need Ember running as admin with the sensor driver." />
+      </Border>
+
+      <ItemsControl ItemsSource="{Binding Disks}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Spacing="12" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:DiskCard">
+            <Border Classes="card">
+              <StackPanel Spacing="16">
+                <DockPanel>
+                  <Border DockPanel.Dock="Right" Classes="pill" Classes.bad="{Binding !IsHealthy}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <Ellipse Width="7" Height="7" VerticalAlignment="Center" Classes="dot" Classes.bad="{Binding !IsHealthy}" />
+                      <TextBlock FontSize="12" Text="{Binding Health}" />
+                    </StackPanel>
+                  </Border>
+                  <StackPanel Spacing="2">
+                    <TextBlock Classes="h2" Text="{Binding Model}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Classes="label" Text="{Binding Subtitle}" />
+                  </StackPanel>
+                </DockPanel>
+
+                <ItemsControl ItemsSource="{Binding Stats}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <UniformGrid Columns="6" />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:StatTile">
+                      <StackPanel Spacing="2" Margin="0,0,12,0">
+                        <TextBlock Classes="label" Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Classes="stat" Text="{Binding Value}" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <StackPanel Spacing="2" IsVisible="{Binding HasVolumes}">
+                  <TextBlock Classes="eyebrow" Text="VOLUMES" Margin="0,0,0,2" />
+                  <ItemsControl ItemsSource="{Binding Volumes}" />
+                </StackPanel>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <Border Classes="card" IsVisible="{Binding HasOtherVolumes}">
+        <StackPanel Spacing="8">
+          <TextBlock Classes="h2" Text="Other volumes" />
+          <ItemsControl ItemsSource="{Binding OtherVolumes}" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

@@ -1,0 +1,83 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Ember.ViewModels"
+             xmlns:c="using:Ember.Controls"
+             x:Class="Ember.Views.NetworkView"
+             x:DataType="vm:NetworkViewModel">
+
+  <ScrollViewer>
+    <StackPanel Spacing="14">
+      <Button Classes="ghost" Command="{Binding BackCommand}" HorizontalAlignment="Left" Margin="-10,-6,0,-4">
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <TextBlock Classes="icon" FontSize="12" Text="&#xE72B;" />
+          <TextBlock Text="Dashboard" />
+        </StackPanel>
+      </Button>
+
+      <StackPanel Classes="pageheader" Margin="0,0,0,6">
+        <TextBlock Classes="h1" Text="Network" />
+        <TextBlock Classes="subtitle" Text="{Binding Summary}" />
+      </StackPanel>
+
+      <ItemsControl ItemsSource="{Binding Adapters}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Spacing="12" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:AdapterCard">
+            <Border Classes="card" Classes.muted="{Binding IsVirtual}">
+              <StackPanel Spacing="14">
+                <DockPanel>
+                  <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6" VerticalAlignment="Top">
+                    <Border Classes="pill accent" IsVisible="{Binding IsPrimary}">
+                      <TextBlock FontSize="12" Foreground="{DynamicResource Accent}" Text="Internet" />
+                    </Border>
+                    <Border Classes="pill" IsVisible="{Binding IsVirtual}">
+                      <TextBlock FontSize="12" Classes="label" Text="Virtual" />
+                    </Border>
+                  </StackPanel>
+                  <Border DockPanel.Dock="Left" Width="36" Height="36" CornerRadius="10" Margin="0,0,12,0"
+                          Background="{DynamicResource SurfaceAlt}" VerticalAlignment="Top">
+                    <TextBlock Classes="icon" FontSize="16" HorizontalAlignment="Center" Text="{Binding Icon}" />
+                  </Border>
+                  <StackPanel Spacing="2">
+                    <TextBlock Classes="h2" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Classes="label" Text="{Binding Description}" TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
+                </DockPanel>
+
+                <Grid ColumnDefinitions="Auto,32,Auto,*">
+                  <StackPanel Grid.Column="0" Spacing="2">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <Ellipse Width="8" Height="8" Fill="{DynamicResource Accent}" VerticalAlignment="Center" />
+                      <TextBlock Classes="label" Text="Download" />
+                    </StackPanel>
+                    <TextBlock Classes="stat" FontSize="20" Text="{Binding DownText}" />
+                  </StackPanel>
+                  <StackPanel Grid.Column="2" Spacing="2">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <Ellipse Width="8" Height="8" Fill="{DynamicResource Series2}" VerticalAlignment="Center" />
+                      <TextBlock Classes="label" Text="Upload" />
+                    </StackPanel>
+                    <TextBlock Classes="stat" FontSize="20" Text="{Binding UpText}" />
+                  </StackPanel>
+                  <StackPanel Grid.Column="3" Spacing="2" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <TextBlock Classes="label" HorizontalAlignment="Right" Text="{Binding IpText}" />
+                    <TextBlock Classes="label" HorizontalAlignment="Right" Text="{Binding LinkText}" />
+                  </StackPanel>
+                </Grid>
+
+                <Border Background="{DynamicResource SurfaceAlt}" CornerRadius="10" Padding="0,6,0,0" ClipToBounds="True">
+                  <c:Sparkline Height="90" Values="{Binding DownHistory}" Values2="{Binding UpHistory}" Maximum="{Binding Max}" />
+                </Border>
+                <TextBlock Classes="label" FontSize="11" Text="{Binding TotalsText}" />
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

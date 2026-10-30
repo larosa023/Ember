@@ -27,10 +27,14 @@ public partial class MainWindowViewModel : ViewModelBase
         CpuDetail = new DetailViewModel(DetailKind.Cpu, () => CurrentPage = Dashboard);
         GpuDetail = new DetailViewModel(DetailKind.Gpu, () => CurrentPage = Dashboard);
         MemoryDetail = new DetailViewModel(DetailKind.Memory, () => CurrentPage = Dashboard);
-        Dashboard.OpenRequested += kind => CurrentPage = kind switch
+        StorageDetail = new StorageViewModel(() => CurrentPage = Dashboard);
+        NetworkDetail = new NetworkViewModel(() => CurrentPage = Dashboard);
+        Dashboard.OpenRequested += page => CurrentPage = page switch
         {
-            DetailKind.Gpu => GpuDetail,
-            DetailKind.Memory => MemoryDetail,
+            "gpu" => GpuDetail,
+            "ram" => MemoryDetail,
+            "storage" => StorageDetail,
+            "network" => NetworkDetail,
             _ => CpuDetail,
         };
         _currentPage = Dashboard;
@@ -46,8 +50,10 @@ public partial class MainWindowViewModel : ViewModelBase
     public DetailViewModel CpuDetail { get; }
     public DetailViewModel GpuDetail { get; }
     public DetailViewModel MemoryDetail { get; }
+    public StorageViewModel StorageDetail { get; }
+    public NetworkViewModel NetworkDetail { get; }
 
-    public bool IsDashboard => CurrentPage == Dashboard || CurrentPage is DetailViewModel;
+    public bool IsDashboard => CurrentPage == Dashboard || CurrentPage is DetailViewModel or StorageViewModel or NetworkViewModel;
     public bool IsProcesses => CurrentPage == Processes;
     public bool IsSensors => CurrentPage == Sensors;
     public bool IsFans => CurrentPage == Fans;
@@ -119,6 +125,8 @@ public partial class MainWindowViewModel : ViewModelBase
         CpuDetail.Update(snapshot);
         GpuDetail.Update(snapshot);
         MemoryDetail.Update(snapshot);
+        StorageDetail.Update(snapshot);
+        NetworkDetail.Update(snapshot);
         Fans.Update(snapshot);
         Sensors.Update(snapshot.Sensors);
         Settings.UpdateGpuList(snapshot.GpuNames);
@@ -133,6 +141,8 @@ public partial class MainWindowViewModel : ViewModelBase
         yield return () => CurrentPage = CpuDetail;
         yield return () => CurrentPage = GpuDetail;
         yield return () => CurrentPage = MemoryDetail;
+        yield return () => CurrentPage = StorageDetail;
+        yield return () => CurrentPage = NetworkDetail;
         yield return () => IsSidebarCollapsed = !IsSidebarCollapsed;
         yield return () => IsSidebarCollapsed = !IsSidebarCollapsed;
         yield return () => Settings.SendTestAlertCommand.Execute(null);
