@@ -1,24 +1,33 @@
-# 🔥 Ember
+<p align="center">
+  <img src="docs/logo.png" width="96" height="96" alt="Ember logo" />
+</p>
 
-**A clean, hyper-lightweight hardware monitor and task manager for Windows.**
+<h1 align="center">Ember</h1>
+
+<p align="center"><b>A clean, hyper-lightweight hardware monitor and task manager for Windows.</b></p>
+
+<p align="center">
+  <a href="../../releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/larosa023/Ember?color=ff6a2b&label=download" /></a>
+  <img alt="Windows 10/11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-1f1f26" />
+  <img alt="MIT license" src="https://img.shields.io/badge/license-MIT-1f1f26" />
+</p>
 
 Ember shows your CPU, GPU and memory at a glance (usage, temperatures, clocks, power) like NZXT CAM, without the account, the bloat or the background services. It also does the everyday Task Manager jobs: find a process, end it, and control what starts with Windows.
-
-<!-- Add a screenshot once you have one: ![Ember dashboard](docs/screenshot.png) -->
 
 ## Features
 
 - **Dashboard**: animated ring gauges and 60-second history graphs for CPU, GPU and RAM, with temps, clocks, power and VRAM
 - **Detail pages**: click the CPU, GPU or Memory card for a 2-minute graph, key stats, per-core usage and every sensor for that part
 - **Storage & network**: every drive letter with free space; per-disk health, temperature, life remaining and activity; live download/upload per network adapter
-- **Processes**: Apps / Background / Windows sections, live CPU, GPU and memory, search, sortable resizable columns, and a right-click menu (end task/tree, priority, efficiency mode, open location, properties, search online)
+- **Processes**: Apps / Background / Windows sections like Task Manager, live CPU, GPU and memory (same numbers as Task Manager) with system totals in the header, search, sortable resizable columns, and a right-click menu (end task/tree, priority, efficiency mode, open location, properties, search online)
 - **History**: a reading every 5 seconds saved to daily CSV logs; charts for temperatures, usage, power and network over 10 minutes to 24 hours, with CSV export
 - **Temperature alerts**: a pop-up when the CPU or GPU stays above your limit, even while Ember is in the tray
 - **Services**: browse, start, stop, restart and change the startup type of Windows services
 - **Fans**: per-fan Auto (BIOS), fixed speed or a drag-to-edit curve linked to any temperature, with safety rails (minimum speed, 100% if the sensor drops out, fans handed back to BIOS when Ember exits)
 - **Sensors**: every sensor your hardware exposes (temps, fans, voltages, clocks, loads, power) with min and max
 - **Startup apps**: enable or disable apps that launch with Windows, same as Task Manager
-- **Themes**: five built-in themes that switch instantly, plus your own themes as simple JSON files
+- **Themes and units**: five built-in themes that switch instantly (plus your own as JSON files); choose °C/°F, MB or GB for memory, Mbps or MB/s for network, and more
+- **Tray and startup**: minimize or close to the tray with live temps in the tooltip, start with Windows (optionally with admin rights, no UAC prompt), collapsible sidebar (`Ctrl+B`)
 - **Built-in updater**: checks GitHub Releases, downloads in the background, installs on restart
 - **Light on resources**: one background sampling loop, process sampling only while that page is open, adjustable refresh rate
 
