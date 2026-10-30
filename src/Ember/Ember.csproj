@@ -9,7 +9,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>Ember</AssemblyName>
     <RootNamespace>Ember</RootNamespace>
-    <Version>0.4.0</Version>
+    <Version>0.4.1</Version>
     <Product>Ember</Product>
     <Description>A clean, hyper-lightweight hardware monitor and task manager.</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>

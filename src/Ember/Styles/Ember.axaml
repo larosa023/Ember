@@ -144,12 +144,9 @@
   </Style>
 
   <!-- Per-core usage bars -->
-  <Style Selector="ProgressBar.core">
-    <Setter Property="Height" Value="6" />
-    <Setter Property="MinHeight" Value="6" />
-    <Setter Property="CornerRadius" Value="3" />
-    <Setter Property="Background" Value="{DynamicResource Stroke}" />
-    <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+  <Style Selector="c|UsageBar">
+    <Setter Property="TrackBrush" Value="{DynamicResource Stroke}" />
+    <Setter Property="FillBrush" Value="{DynamicResource Accent}" />
     <Setter Property="Transitions">
       <Transitions>
         <DoubleTransition Property="Value" Duration="0:0:0.35" Easing="CubicEaseOut" />

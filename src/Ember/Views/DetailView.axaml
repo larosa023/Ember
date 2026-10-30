@@ -74,7 +74,7 @@
                       <TextBlock DockPanel.Dock="Right" FontWeight="SemiBold" Text="{Binding LoadText}" />
                       <TextBlock Classes="label" Text="{Binding Name}" />
                     </DockPanel>
-                    <ProgressBar Classes="core" Minimum="0" Maximum="100" Value="{Binding Load}" />
+                    <c:UsageBar Height="6" HorizontalAlignment="Stretch" Value="{Binding Load}" />
                     <TextBlock Classes="label" FontSize="11" Text="{Binding ClockText}" />
                   </StackPanel>
                 </Border>
