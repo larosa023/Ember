@@ -15,6 +15,7 @@ public sealed class ViewLocator : IDataTemplate
         SensorsViewModel => new SensorsView(),
         FansViewModel => new FansView(),
         HistoryViewModel => new HistoryView(),
+        ServicesViewModel => new ServicesView(),
         DetailViewModel => new DetailView(),
         StorageViewModel => new StorageView(),
         NetworkViewModel => new NetworkView(),

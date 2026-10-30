@@ -130,6 +130,13 @@
               <TextBlock Classes="navlabel" Text="Fans" />
             </StackPanel>
           </Button>
+          <Button Classes="nav" Classes.active="{Binding IsServices}" Tag="Services"
+                  Command="{Binding NavigateCommand}" CommandParameter="services">
+            <StackPanel Orientation="Horizontal" Spacing="14">
+              <TextBlock Classes="icon" Text="&#xE912;" />
+              <TextBlock Classes="navlabel" Text="Services" />
+            </StackPanel>
+          </Button>
           <Button Classes="nav" Classes.active="{Binding IsStartup}" Tag="Startup apps"
                   Command="{Binding NavigateCommand}" CommandParameter="startup">
             <StackPanel Orientation="Horizontal" Spacing="14">

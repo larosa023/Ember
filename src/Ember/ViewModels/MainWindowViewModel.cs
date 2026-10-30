@@ -14,7 +14,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly SettingsService _settings;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsDashboard), nameof(IsProcesses), nameof(IsSensors), nameof(IsHistory), nameof(IsFans), nameof(IsStartup), nameof(IsSettings))]
+    [NotifyPropertyChangedFor(nameof(IsDashboard), nameof(IsProcesses), nameof(IsSensors), nameof(IsHistory), nameof(IsFans), nameof(IsServices), nameof(IsStartup), nameof(IsSettings))]
     private ViewModelBase _currentPage;
 
     public MainWindowViewModel(MonitorHost host, SettingsService settings, ThemeService themes, UpdateService updates,
@@ -50,6 +50,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public SettingsViewModel Settings { get; }
     public FansViewModel Fans { get; }
     public HistoryViewModel History { get; }
+    public ServicesViewModel Services { get; } = new();
     public DetailViewModel CpuDetail { get; }
     public DetailViewModel GpuDetail { get; }
     public DetailViewModel MemoryDetail { get; }
@@ -61,6 +62,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool IsSensors => CurrentPage == Sensors;
     public bool IsFans => CurrentPage == Fans;
     public bool IsHistory => CurrentPage == History;
+    public bool IsServices => CurrentPage == Services;
     public bool IsStartup => CurrentPage == Startup;
     public bool IsSettings => CurrentPage == Settings;
 
@@ -141,7 +143,7 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <summary>Visits every page once; used by the release build's smoke test.</summary>
     public IEnumerable<Action> SmokeTestSteps()
     {
-        foreach (var page in new[] { "processes", "sensors", "history", "fans", "startup", "settings", "dashboard" })
+        foreach (var page in new[] { "processes", "sensors", "history", "fans", "services", "startup", "settings", "dashboard" })
             yield return () => Navigate(page);
         yield return () => CurrentPage = CpuDetail;
         yield return () => CurrentPage = GpuDetail;
@@ -163,6 +165,7 @@ public partial class MainWindowViewModel : ViewModelBase
             "sensors" => Sensors,
             "fans" => Fans,
             "history" => History,
+            "services" => Services,
             "startup" => Startup,
             "settings" => Settings,
             _ => Dashboard,
@@ -175,6 +178,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _host.SampleProcesses = value == Processes;
         if (value == Startup && Startup.Items.Count == 0) Startup.Refresh();
         if (value == History) History.Refresh();
+        if (value == Services && Services.Items.Count == 0) _ = Services.Refresh();
     }
 
     [RelayCommand]

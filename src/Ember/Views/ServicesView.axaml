@@ -1,0 +1,115 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Ember.ViewModels"
+             x:Class="Ember.Views.ServicesView"
+             x:DataType="vm:ServicesViewModel">
+
+  <DockPanel>
+    <StackPanel DockPanel.Dock="Top" Classes="pageheader">
+      <TextBlock Classes="h1" Text="Services" />
+      <TextBlock Classes="subtitle" Text="{Binding Summary}" />
+    </StackPanel>
+
+    <Border DockPanel.Dock="Top" Classes="banner" Margin="0,0,0,12" IsVisible="{Binding !IsElevated}">
+      <TextBlock TextWrapping="Wrap" FontSize="13"
+                 Text="You can browse services now. Starting, stopping or changing them needs Ember running as admin." />
+    </Border>
+
+    <!-- Toolbar -->
+    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+        <Button Classes="ghost" Command="{Binding StartCommand}">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Classes="icon" FontSize="13" Text="&#xE768;" />
+            <TextBlock Text="Start" />
+          </StackPanel>
+        </Button>
+        <Button Classes="ghost" Command="{Binding StopCommand}">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Classes="icon" FontSize="13" Text="&#xE71A;" />
+            <TextBlock Text="Stop" />
+          </StackPanel>
+        </Button>
+        <Button Classes="ghost" Command="{Binding RestartCommand}">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Classes="icon" FontSize="13" Text="&#xE72C;" />
+            <TextBlock Text="Restart" />
+          </StackPanel>
+        </Button>
+      </StackPanel>
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <TextBox Classes="search" Width="280" Watermark="Search services" Text="{Binding Search}">
+          <TextBox.InnerLeftContent>
+            <TextBlock Classes="icon" FontSize="13" Margin="10,0,2,0" Foreground="{DynamicResource TextMuted}" Text="&#xE721;" />
+          </TextBox.InnerLeftContent>
+        </TextBox>
+        <ComboBox Width="180" ItemsSource="{Binding Filters}" SelectedItem="{Binding Filter}" VerticalAlignment="Center" />
+      </StackPanel>
+    </DockPanel>
+
+    <TextBlock DockPanel.Dock="Bottom" Classes="label" Margin="4,10,0,0" TextWrapping="Wrap" Text="{Binding Status}"
+               IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+    <Border Classes="card" Padding="0" ClipToBounds="True">
+      <DockPanel>
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,170,110" Margin="26,12,26,8">
+          <TextBlock Grid.Column="0" Classes="eyebrow" Text="NAME" />
+          <TextBlock Grid.Column="1" Classes="eyebrow" Text="STARTUP" />
+          <TextBlock Grid.Column="2" Classes="eyebrow" Text="STATUS" />
+        </Grid>
+        <Border DockPanel.Dock="Top" Height="1" Background="{DynamicResource Stroke}" />
+
+        <ListBox Classes="rows" ItemsSource="{Binding Items}" SelectedItem="{Binding Selected}">
+          <ListBox.ContextMenu>
+            <ContextMenu Opening="OnMenuOpening">
+              <MenuItem Header="Start" Command="{Binding StartCommand}">
+                <MenuItem.Icon><TextBlock Classes="icon" FontSize="13" Text="&#xE768;" /></MenuItem.Icon>
+              </MenuItem>
+              <MenuItem Header="Stop" Command="{Binding StopCommand}">
+                <MenuItem.Icon><TextBlock Classes="icon" FontSize="13" Text="&#xE71A;" /></MenuItem.Icon>
+              </MenuItem>
+              <MenuItem Header="Restart" Command="{Binding RestartCommand}">
+                <MenuItem.Icon><TextBlock Classes="icon" FontSize="13" Text="&#xE72C;" /></MenuItem.Icon>
+              </MenuItem>
+              <Separator />
+              <MenuItem Header="Startup type">
+                <MenuItem.Icon><TextBlock Classes="icon" FontSize="13" Text="&#xE7E8;" /></MenuItem.Icon>
+                <MenuItem Header="Automatic" Command="{Binding SetStartupCommand}" CommandParameter="auto" />
+                <MenuItem Header="Automatic (delayed)" Command="{Binding SetStartupCommand}" CommandParameter="delayed" />
+                <MenuItem Header="Manual" Command="{Binding SetStartupCommand}" CommandParameter="manual" />
+                <MenuItem Header="Disabled" Command="{Binding SetStartupCommand}" CommandParameter="disabled" />
+              </MenuItem>
+              <Separator />
+              <MenuItem Header="Search online" Command="{Binding SearchOnlineCommand}">
+                <MenuItem.Icon><TextBlock Classes="icon" FontSize="13" Text="&#xE721;" /></MenuItem.Icon>
+              </MenuItem>
+              <MenuItem Header="Copy service name" Command="{Binding CopyNameCommand}">
+                <MenuItem.Icon><TextBlock Classes="icon" FontSize="13" Text="&#xE8C8;" /></MenuItem.Icon>
+              </MenuItem>
+              <MenuItem Header="Open Windows Services" Command="{Binding OpenConsoleCommand}">
+                <MenuItem.Icon><TextBlock Classes="icon" FontSize="13" Text="&#xE8A7;" /></MenuItem.Icon>
+              </MenuItem>
+            </ContextMenu>
+          </ListBox.ContextMenu>
+
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:ServiceRow">
+              <Grid ColumnDefinitions="*,170,110">
+                <StackPanel Grid.Column="0" Spacing="1" Margin="0,0,16,0">
+                  <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Classes="label" Text="{Binding Description}" TextTrimming="CharacterEllipsis"
+                             ToolTip.Tip="{Binding Description}" />
+                </StackPanel>
+                <TextBlock Grid.Column="1" Classes="label" FontSize="13" Text="{Binding Startup}" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
+                  <Ellipse Width="7" Height="7" Classes="dot" Classes.off="{Binding !IsRunning}" VerticalAlignment="Center" />
+                  <TextBlock FontSize="13" Text="{Binding State}" />
+                </StackPanel>
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </DockPanel>
+    </Border>
+  </DockPanel>
+</UserControl>
