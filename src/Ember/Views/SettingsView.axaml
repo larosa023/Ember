@@ -64,21 +64,50 @@
               </StackPanel>
             </DockPanel>
           </Border>
+        </StackPanel>
+      </Border>
+
+      <!-- Units -->
+      <TextBlock Classes="eyebrow" Text="UNITS" Margin="4,16,4,0" />
+      <Border Classes="card" Padding="20,2">
+        <StackPanel>
           <Border Classes="row">
             <DockPanel>
-              <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding UseFahrenheit}" />
+              <ComboBox DockPanel.Dock="Right" Width="270" VerticalAlignment="Center"
+                        ItemsSource="{Binding TemperatureUnits}" SelectedItem="{Binding SelectedTemperatureUnit}" />
               <StackPanel Spacing="2" Margin="0,0,16,0">
-                <TextBlock Text="Temperatures in °F" FontWeight="SemiBold" />
-                <TextBlock Classes="label" Text="Celsius when off." />
+                <TextBlock Text="Temperature" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="Used everywhere, including alerts and fan curves." />
               </StackPanel>
             </DockPanel>
           </Border>
           <Border Classes="row">
             <DockPanel>
-              <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding MemoryInMb}" />
+              <ComboBox DockPanel.Dock="Right" Width="270" VerticalAlignment="Center"
+                        ItemsSource="{Binding MemoryUnits}" SelectedItem="{Binding SelectedMemoryUnit}" />
               <StackPanel Spacing="2" Margin="0,0,16,0">
-                <TextBlock Text="Process memory in MB" FontWeight="SemiBold" />
-                <TextBlock Classes="label" TextWrapping="Wrap" Text="Shows 1,567.4 MB like Task Manager. Off picks MB or GB automatically." />
+                <TextBlock Text="Process memory" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="Memory column on the Processes page. Also on its header's right-click menu." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
+          <Border Classes="row">
+            <DockPanel>
+              <ComboBox DockPanel.Dock="Right" Width="270" VerticalAlignment="Center"
+                        ItemsSource="{Binding NetUnits}" SelectedItem="{Binding SelectedNetUnit}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Network speed" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="Bits (Mbps) is how internet plans are sold; bytes (MB/s) is how downloads show." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
+          <Border Classes="row">
+            <DockPanel>
+              <ComboBox DockPanel.Dock="Right" Width="270" VerticalAlignment="Center"
+                        ItemsSource="{Binding DiskUnits}" SelectedItem="{Binding SelectedDiskUnit}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Disk speed" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="Read and write speeds on the Storage page." />
               </StackPanel>
             </DockPanel>
           </Border>

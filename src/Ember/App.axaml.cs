@@ -44,7 +44,11 @@ public partial class App : Application
             var themes = new ThemeService();
             themes.ApplyByName(_settings.Current.Theme);
             Format.UseFahrenheit = _settings.Current.UseFahrenheit;
-            Format.ProcessMemoryInMb = _settings.Current.ProcessMemoryInMb;
+            if (string.IsNullOrEmpty(_settings.Current.MemoryUnit))
+                _settings.Current.MemoryUnit = _settings.Current.ProcessMemoryInMb ? "mb" : "auto";
+            Format.MemoryUnit = _settings.Current.MemoryUnit;
+            Format.NetUnit = _settings.Current.NetUnit;
+            Format.DiskUnit = _settings.Current.DiskUnit;
             ColumnLayout.Instance.Attach(_settings);
 
             var history = new HistoryService(_settings);

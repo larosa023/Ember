@@ -59,15 +59,16 @@ public partial class ProcessesViewModel : ViewModelBase
     public string MemoryHeader => Header("mem", "Memory");
 
     /// <summary>Set by the main view-model so the header menu and Settings share one saved setting.</summary>
-    public Action? ToggleMemoryUnitsRequested { get; set; }
+    public Action<string>? SetMemoryUnitRequested { get; set; }
 
-    public bool MemoryInMb => Format.ProcessMemoryInMb;
+    public bool MemoryAuto => Format.MemoryUnit is not ("mb" or "gb");
+    public bool MemoryMb => Format.MemoryUnit == "mb";
+    public bool MemoryGb => Format.MemoryUnit == "gb";
 
     [RelayCommand]
-    private void ToggleMemoryUnits()
+    private void SetMemoryUnit(string key)
     {
-        ToggleMemoryUnitsRequested?.Invoke();
-        OnPropertyChanged(nameof(MemoryInMb));
+        SetMemoryUnitRequested?.Invoke(key);
         Refresh();
     }
 
@@ -113,7 +114,10 @@ public partial class ProcessesViewModel : ViewModelBase
     public void Update(IReadOnlyList<ProcessInfo> list)
     {
         _last = list;
-        OnPropertyChanged(nameof(MemoryInMb));   // stay in sync if the setting was changed on the Settings page
+        // Stay in sync if the unit was changed on the Settings page.
+        OnPropertyChanged(nameof(MemoryAuto));
+        OnPropertyChanged(nameof(MemoryMb));
+        OnPropertyChanged(nameof(MemoryGb));
         var query = Search.Trim();
 
         // 1. Bucket processes by exe (or name when the path is hidden).

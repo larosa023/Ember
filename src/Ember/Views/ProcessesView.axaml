@@ -86,10 +86,14 @@
                   ToolTip.Tip="Click to sort · right-click for units">
             <Button.ContextMenu>
               <ContextMenu>
-                <MenuItem Header="Show in MB (like Task Manager)" Command="{Binding ToggleMemoryUnitsCommand}">
-                  <MenuItem.Icon>
-                    <TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{Binding MemoryInMb}" />
-                  </MenuItem.Icon>
+                <MenuItem Header="Automatic (MB or GB)" Command="{Binding SetMemoryUnitCommand}" CommandParameter="auto">
+                  <MenuItem.Icon><TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{Binding MemoryAuto}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Always MB, like Task Manager" Command="{Binding SetMemoryUnitCommand}" CommandParameter="mb">
+                  <MenuItem.Icon><TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{Binding MemoryMb}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Always GB" Command="{Binding SetMemoryUnitCommand}" CommandParameter="gb">
+                  <MenuItem.Icon><TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{Binding MemoryGb}" /></MenuItem.Icon>
                 </MenuItem>
               </ContextMenu>
             </Button.ContextMenu>

@@ -59,7 +59,10 @@ public sealed class AppSettings
     public string Theme { get; set; } = "Ember";
     public int RefreshMs { get; set; } = 1000;
     public bool UseFahrenheit { get; set; }
-    public bool ProcessMemoryInMb { get; set; }
+    public bool ProcessMemoryInMb { get; set; }   // pre-0.6.2 setting, migrated to MemoryUnit
+    public string MemoryUnit { get; set; } = "";
+    public string NetUnit { get; set; } = "bits";
+    public string DiskUnit { get; set; } = "auto";
     public bool AutoCheckUpdates { get; set; } = true;
     public bool MinimizeToTray { get; set; } = true;
     public bool CloseToTray { get; set; }

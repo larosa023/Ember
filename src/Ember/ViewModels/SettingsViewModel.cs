@@ -13,6 +13,11 @@ public sealed record RefreshOption(int Ms, string Label)
     public override string ToString() => Label;
 }
 
+public sealed record UnitOption(string Key, string Label)
+{
+    public override string ToString() => Label;
+}
+
 public sealed record RetentionOption(int Days, string Label)
 {
     public override string ToString() => Label;
@@ -40,7 +45,10 @@ public partial class SettingsViewModel : ViewModelBase
         _cpuAlert = settings.Current.CpuAlertC;
         _gpuAlert = settings.Current.GpuAlertC;
         _historyToDisk = settings.Current.HistoryToDisk;
-        _memoryInMb = settings.Current.ProcessMemoryInMb;
+        _selectedTemperatureUnit = TemperatureUnits[settings.Current.UseFahrenheit ? 1 : 0];
+        _selectedMemoryUnit = Pick(MemoryUnits, settings.Current.MemoryUnit);
+        _selectedNetUnit = Pick(NetUnits, settings.Current.NetUnit);
+        _selectedDiskUnit = Pick(DiskUnits, settings.Current.DiskUnit);
         _selectedRetention = RetentionOptions.FirstOrDefault(o => o.Days == settings.Current.HistoryDays) ?? RetentionOptions[1];
         _themes = themes;
         _updates = updates;
@@ -141,12 +149,72 @@ public partial class SettingsViewModel : ViewModelBase
         OnPropertyChanged(nameof(GpuAlertText));
     }
 
-    [ObservableProperty] private bool _memoryInMb;
+    // ---------- Units ----------
 
-    partial void OnMemoryInMbChanged(bool value)
+    public IReadOnlyList<UnitOption> TemperatureUnits { get; } =
+    [
+        new("c", "Celsius (°C)"),
+        new("f", "Fahrenheit (°F)"),
+    ];
+
+    public IReadOnlyList<UnitOption> MemoryUnits { get; } =
+    [
+        new("auto", "Automatic (MB or GB)"),
+        new("mb", "Always MB, like Task Manager"),
+        new("gb", "Always GB"),
+    ];
+
+    public IReadOnlyList<UnitOption> NetUnits { get; } =
+    [
+        new("bits", "Automatic bits (Kbps, Mbps, Gbps)"),
+        new("mbps", "Always Mbps, like Task Manager"),
+        new("bytes", "Automatic bytes (KB/s, MB/s)"),
+        new("mbs", "Always MB/s"),
+    ];
+
+    public IReadOnlyList<UnitOption> DiskUnits { get; } =
+    [
+        new("auto", "Automatic (KB/s, MB/s, GB/s)"),
+        new("mbs", "Always MB/s, like Task Manager"),
+    ];
+
+    [ObservableProperty] private UnitOption _selectedTemperatureUnit;
+    [ObservableProperty] private UnitOption _selectedMemoryUnit;
+    [ObservableProperty] private UnitOption _selectedNetUnit;
+    [ObservableProperty] private UnitOption _selectedDiskUnit;
+
+    /// <summary>Lets other pages (e.g. the Memory column header) change the memory unit.</summary>
+    public void SetMemoryUnit(string key) => SelectedMemoryUnit = Pick(MemoryUnits, key);
+
+    private static UnitOption Pick(IReadOnlyList<UnitOption> options, string? key) =>
+        options.FirstOrDefault(o => o.Key == key) ?? options[0];
+
+    partial void OnSelectedTemperatureUnitChanged(UnitOption value)
     {
-        Format.ProcessMemoryInMb = value;
-        _settings.Current.ProcessMemoryInMb = value;
+        if (value is not null) UseFahrenheit = value.Key == "f";
+    }
+
+    partial void OnSelectedMemoryUnitChanged(UnitOption value)
+    {
+        if (value is null) return;
+        Format.MemoryUnit = value.Key;
+        _settings.Current.MemoryUnit = value.Key;
+        _settings.Save();
+    }
+
+    partial void OnSelectedNetUnitChanged(UnitOption value)
+    {
+        if (value is null) return;
+        Format.NetUnit = value.Key;
+        _settings.Current.NetUnit = value.Key;
+        _settings.Save();
+    }
+
+    partial void OnSelectedDiskUnitChanged(UnitOption value)
+    {
+        if (value is null) return;
+        Format.DiskUnit = value.Key;
+        _settings.Current.DiskUnit = value.Key;
         _settings.Save();
     }
 

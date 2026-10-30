@@ -9,11 +9,21 @@ public static class Format
 
     public static bool UseFahrenheit { get; set; }
 
-    /// <summary>Show process memory as "1,567.4 MB" like Task Manager instead of picking KB/MB/GB.</summary>
-    public static bool ProcessMemoryInMb { get; set; }
+    /// <summary>Process memory: "auto" (MB or GB), "mb" (always MB, like Task Manager) or "gb".</summary>
+    public static string MemoryUnit { get; set; } = "auto";
 
-    public static string ProcessMemory(long bytes) =>
-        ProcessMemoryInMb ? $"{bytes / 1048576.0:N1} MB" : Bytes(bytes);
+    /// <summary>Network speed: "bits" (Kbps/Mbps/Gbps), "mbps", "bytes" (KB/s/MB/s) or "mbs".</summary>
+    public static string NetUnit { get; set; } = "bits";
+
+    /// <summary>Disk speed: "auto" (KB/s/MB/s/GB/s) or "mbs" (always MB/s, like Task Manager).</summary>
+    public static string DiskUnit { get; set; } = "auto";
+
+    public static string ProcessMemory(long bytes) => MemoryUnit switch
+    {
+        "mb" => $"{bytes / 1048576.0:N1} MB",
+        "gb" => $"{bytes / 1073741824.0:N2} GB",
+        _ => Bytes(bytes),
+    };
 
     public static string Temp(float? celsius)
     {
@@ -44,10 +54,18 @@ public static class Format
     public static string NetRate(double bytesPerSecond)
     {
         var bits = bytesPerSecond * 8;
-        return bits >= 1e9 ? $"{bits / 1e9:0.00} Gbps"
-            : bits >= 1e6 ? $"{bits / 1e6:0.0} Mbps"
-            : bits >= 1e3 ? $"{bits / 1e3:0} Kbps"
-            : $"{bits:0} bps";
+        return NetUnit switch
+        {
+            "mbps" => $"{bits / 1e6:N1} Mbps",
+            "mbs" => $"{bytesPerSecond / 1048576:N2} MB/s",
+            "bytes" => bytesPerSecond >= 1073741824 ? $"{bytesPerSecond / 1073741824:0.00} GB/s"
+                : bytesPerSecond >= 1048576 ? $"{bytesPerSecond / 1048576:0.0} MB/s"
+                : $"{bytesPerSecond / 1024:0} KB/s",
+            _ => bits >= 1e9 ? $"{bits / 1e9:0.00} Gbps"
+                : bits >= 1e6 ? $"{bits / 1e6:0.0} Mbps"
+                : bits >= 1e3 ? $"{bits / 1e3:0} Kbps"
+                : $"{bits:0} bps",
+        };
     }
 
     public static string LinkSpeed(long bps) =>
@@ -55,7 +73,9 @@ public static class Format
 
     /// <summary>Disk transfer rate (bytes per second).</summary>
     public static string DiskRate(double bytesPerSecond) =>
-        bytesPerSecond < 1024 ? "0 MB/s" : Bytes((long)bytesPerSecond) + "/s";
+        DiskUnit == "mbs" ? $"{bytesPerSecond / 1048576:N1} MB/s"
+        : bytesPerSecond < 1024 ? "0 MB/s"
+        : Bytes((long)bytesPerSecond) + "/s";
 
     public static string Uptime(TimeSpan t) =>
         t.TotalDays >= 1 ? $"{(int)t.TotalDays}d {t.Hours}h {t.Minutes}m"

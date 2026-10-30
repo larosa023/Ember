@@ -21,7 +21,7 @@ public partial class MainWindowViewModel : ViewModelBase
         AlertService alerts, HistoryService history)
     {
         History = new HistoryViewModel(history);
-        Processes.ToggleMemoryUnitsRequested = () => Settings!.MemoryInMb = !Settings.MemoryInMb;
+        Processes.SetMemoryUnitRequested = key => Settings!.SetMemoryUnit(key);
         _host = host;
         _settings = settings;
         _isSidebarCollapsed = settings.Current.SidebarCollapsed;
