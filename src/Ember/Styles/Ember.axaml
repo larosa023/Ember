@@ -95,16 +95,16 @@
     <Setter Property="BorderThickness" Value="0,0,1,0" />
   </Style>
 
-  <Style Selector="Border.sidebar .collapsed-only">
+  <Style Selector="Border.sidebar :is(Control).collapsed-only">
     <Setter Property="IsVisible" Value="False" />
   </Style>
-  <Style Selector="Border.sidebar.collapsed .collapsed-only">
+  <Style Selector="Border.sidebar.collapsed :is(Control).collapsed-only">
     <Setter Property="IsVisible" Value="True" />
   </Style>
-  <Style Selector="Border.sidebar.collapsed .expanded-only">
+  <Style Selector="Border.sidebar.collapsed :is(Control).expanded-only">
     <Setter Property="IsVisible" Value="False" />
   </Style>
-  <Style Selector="Border.sidebar.collapsed .navlabel">
+  <Style Selector="Border.sidebar.collapsed :is(Control).navlabel">
     <Setter Property="IsVisible" Value="False" />
   </Style>
   <!-- Collapsed: each nav button shows its Tag as a tooltip -->
