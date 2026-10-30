@@ -138,6 +138,7 @@ public partial class MainWindowViewModel : ViewModelBase
         Fans.Update(snapshot);
         Sensors.Update(snapshot.Sensors);
         Settings.UpdateGpuList(snapshot.GpuNames);
+        Processes.UpdateTotals(snapshot);
         if (processes is not null) Processes.Update(processes);
     }
 

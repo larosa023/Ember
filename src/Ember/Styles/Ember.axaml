@@ -269,6 +269,13 @@
     <Setter Property="Background" Value="Transparent" />
   </Style>
 
+  <!-- System totals above the CPU / GPU / Memory column names -->
+  <Style Selector="TextBlock.coltotal">
+    <Setter Property="FontSize" Value="17" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Text}" />
+  </Style>
+
   <Style Selector="Border.divider">
     <Setter Property="Width" Value="1" />
     <Setter Property="Margin" Value="0,9" />

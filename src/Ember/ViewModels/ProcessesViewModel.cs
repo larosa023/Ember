@@ -58,6 +58,18 @@ public partial class ProcessesViewModel : ViewModelBase
     public string GpuHeader => Header("gpu", "GPU");
     public string MemoryHeader => Header("mem", "Memory");
 
+    // System-wide totals shown above the column names (like Task Manager).
+    [ObservableProperty] private string _totalCpuText = "";
+    [ObservableProperty] private string _totalGpuText = "";
+    [ObservableProperty] private string _totalMemText = "";
+
+    public void UpdateTotals(HardwareSnapshot s)
+    {
+        TotalCpuText = s.CpuLoad is float c ? $"{c:0}%" : "";
+        TotalGpuText = s.GpuLoad is float g ? $"{g:0}%" : "";
+        TotalMemText = s.RamLoad is float m ? $"{m:0}%" : "";
+    }
+
     /// <summary>Set by the main view-model so the header menu and Settings share one saved setting.</summary>
     public Action<string>? SetMemoryUnitRequested { get; set; }
 

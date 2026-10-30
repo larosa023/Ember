@@ -51,8 +51,8 @@
       <DockPanel>
 
         <!-- Header with draggable dividers -->
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Height="36" Margin="16,2,0,0">
-          <Button Classes="header" HorizontalContentAlignment="Left" VerticalAlignment="Stretch"
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Height="54" Margin="16,2,0,0">
+          <Button Classes="header" HorizontalContentAlignment="Left" VerticalAlignment="Stretch" VerticalContentAlignment="Bottom" Padding="0,0,0,8"
                   Width="{ReflectionBinding NameWidth, Source={x:Static vm:ColumnLayout.Instance}}"
                   Content="{Binding NameHeader}" Command="{Binding SortCommand}" CommandParameter="name" />
           <c:ColumnResizer Column="name">
@@ -61,29 +61,44 @@
 
           <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch"
                   Width="{ReflectionBinding PidWidth, Source={x:Static vm:ColumnLayout.Instance}}"
-                  Content="{Binding PidHeader}" Command="{Binding SortCommand}" CommandParameter="pid" />
+                  Content="{Binding PidHeader}" Command="{Binding SortCommand}" CommandParameter="pid"
+                  VerticalContentAlignment="Bottom" Padding="0,0,0,8" />
           <c:ColumnResizer Column="pid">
             <Border Classes="divider" />
           </c:ColumnResizer>
 
           <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch"
                   Width="{ReflectionBinding CpuWidth, Source={x:Static vm:ColumnLayout.Instance}}"
-                  Content="{Binding CpuHeader}" Command="{Binding SortCommand}" CommandParameter="cpu" />
+                  Command="{Binding SortCommand}" CommandParameter="cpu" VerticalContentAlignment="Bottom" Padding="0,0,0,8">
+            <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom" Spacing="0">
+              <TextBlock Classes="coltotal" HorizontalAlignment="Right" Text="{Binding TotalCpuText}" />
+              <TextBlock HorizontalAlignment="Right" Text="{Binding CpuHeader}" />
+            </StackPanel>
+          </Button>
           <c:ColumnResizer Column="cpu">
             <Border Classes="divider" />
           </c:ColumnResizer>
 
           <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch"
                   Width="{ReflectionBinding GpuWidth, Source={x:Static vm:ColumnLayout.Instance}}"
-                  Content="{Binding GpuHeader}" Command="{Binding SortCommand}" CommandParameter="gpu" />
+                  Command="{Binding SortCommand}" CommandParameter="gpu" VerticalContentAlignment="Bottom" Padding="0,0,0,8">
+            <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom" Spacing="0">
+              <TextBlock Classes="coltotal" HorizontalAlignment="Right" Text="{Binding TotalGpuText}" />
+              <TextBlock HorizontalAlignment="Right" Text="{Binding GpuHeader}" />
+            </StackPanel>
+          </Button>
           <c:ColumnResizer Column="gpu">
             <Border Classes="divider" />
           </c:ColumnResizer>
 
           <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch"
                   Width="{ReflectionBinding MemWidth, Source={x:Static vm:ColumnLayout.Instance}}"
-                  Content="{Binding MemoryHeader}" Command="{Binding SortCommand}" CommandParameter="mem"
+                  Command="{Binding SortCommand}" CommandParameter="mem" VerticalContentAlignment="Bottom" Padding="0,0,0,8"
                   ToolTip.Tip="Click to sort · right-click for units">
+            <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom" Spacing="0">
+              <TextBlock Classes="coltotal" HorizontalAlignment="Right" Text="{Binding TotalMemText}" />
+              <TextBlock HorizontalAlignment="Right" Text="{Binding MemoryHeader}" />
+            </StackPanel>
             <Button.ContextMenu>
               <ContextMenu>
                 <MenuItem Header="Automatic (MB or GB)" Command="{Binding SetMemoryUnitCommand}" CommandParameter="auto">
