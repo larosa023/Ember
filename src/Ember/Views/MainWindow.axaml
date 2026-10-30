@@ -33,7 +33,8 @@
           <StackPanel Orientation="Horizontal" Spacing="14">
             <TextBlock Classes="icon" Text="&#xE700;" />
             <StackPanel Classes="navlabel" Orientation="Horizontal" Spacing="8">
-              <Ellipse Width="10" Height="10" Fill="{DynamicResource Accent}" VerticalAlignment="Center" />
+              <Image Source="/Assets/ember-64.png" Width="20" Height="20" VerticalAlignment="Center"
+                     RenderOptions.BitmapInterpolationMode="HighQuality" />
               <TextBlock Text="Ember" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource Text}" />
             </StackPanel>
           </StackPanel>
