@@ -125,6 +125,19 @@ public partial class MainWindowViewModel : ViewModelBase
         if (processes is not null) Processes.Update(processes);
     }
 
+    /// <summary>Visits every page once; used by the release build's smoke test.</summary>
+    public IEnumerable<Action> SmokeTestSteps()
+    {
+        foreach (var page in new[] { "processes", "sensors", "fans", "startup", "settings", "dashboard" })
+            yield return () => Navigate(page);
+        yield return () => CurrentPage = CpuDetail;
+        yield return () => CurrentPage = GpuDetail;
+        yield return () => CurrentPage = MemoryDetail;
+        yield return () => IsSidebarCollapsed = !IsSidebarCollapsed;
+        yield return () => IsSidebarCollapsed = !IsSidebarCollapsed;
+        yield return () => Navigate("dashboard");
+    }
+
     [RelayCommand]
     private void Navigate(string page)
     {

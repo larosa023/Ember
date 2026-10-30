@@ -66,11 +66,41 @@ public partial class App : Application
 
             _host.Start();
 
-            if (_settings.Current.AutoCheckUpdates)
+            if (Program.SmokeTest)
+                RunSmokeTest();
+            else if (_settings.Current.AutoCheckUpdates)
                 _ = _vm.Settings.CheckForUpdatesSilentlyAsync();
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    /// <summary>
+    /// Release-build check: open every page (so every view and binding is created), let a few
+    /// sensor ticks run, then exit 0. Exceptions on the UI thread fail the run with exit code 4.
+    /// </summary>
+    private void RunSmokeTest()
+    {
+        Dispatcher.UIThread.UnhandledException += (_, e) =>
+        {
+            CrashLog.Write(e.Exception);
+            Environment.Exit(4);
+        };
+
+        var steps = new Queue<Action>(_vm!.SmokeTestSteps());
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(700) };
+        timer.Tick += (_, _) =>
+        {
+            if (steps.Count > 0)
+            {
+                steps.Dequeue()();
+                return;
+            }
+            timer.Stop();
+            _desktop?.Shutdown(0);
+        };
+        // Give the sensor loop a couple of seconds to start delivering data first.
+        DispatcherTimer.RunOnce(timer.Start, TimeSpan.FromSeconds(3));
     }
 
     /// <summary>Exit Ember for real (tray menu, restart as admin, etc.).</summary>

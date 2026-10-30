@@ -70,6 +70,21 @@ jobs:
             exit 1
           }
 
+      - name: Smoke test (launch Ember and open every page)
+        if: steps.check.outputs.exists == 'false'
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath publish\Ember.exe -ArgumentList '--smoke-test' -PassThru
+          $null = $p.Handle   # cache the handle so ExitCode is available afterwards
+          if (-not $p.WaitForExit(120000)) { $p.Kill(); "::error::Ember did not exit within 120 seconds"; exit 1 }
+          if ($p.ExitCode -ne 0) {
+            "::error::Ember crashed during the smoke test (exit code $($p.ExitCode)). Release blocked."
+            $log = Join-Path $env:APPDATA 'Ember\crash.log'
+            if (Test-Path $log) { Get-Content $log | Select-Object -First 30 | ForEach-Object { "::error::$_" } }
+            exit 1
+          }
+          Write-Host "Smoke test passed."
+
       - name: Install Velopack CLI
         if: steps.check.outputs.exists == 'false'
         run: dotnet tool install -g vpk --version ${{ env.VPK_VERSION }}
