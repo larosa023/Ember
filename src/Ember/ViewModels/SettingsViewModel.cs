@@ -40,6 +40,7 @@ public partial class SettingsViewModel : ViewModelBase
         _cpuAlert = settings.Current.CpuAlertC;
         _gpuAlert = settings.Current.GpuAlertC;
         _historyToDisk = settings.Current.HistoryToDisk;
+        _memoryInMb = settings.Current.ProcessMemoryInMb;
         _selectedRetention = RetentionOptions.FirstOrDefault(o => o.Days == settings.Current.HistoryDays) ?? RetentionOptions[1];
         _themes = themes;
         _updates = updates;
@@ -138,6 +139,15 @@ public partial class SettingsViewModel : ViewModelBase
         _settings.Save();
         OnPropertyChanged(nameof(CpuAlertText));
         OnPropertyChanged(nameof(GpuAlertText));
+    }
+
+    [ObservableProperty] private bool _memoryInMb;
+
+    partial void OnMemoryInMbChanged(bool value)
+    {
+        Format.ProcessMemoryInMb = value;
+        _settings.Current.ProcessMemoryInMb = value;
+        _settings.Save();
     }
 
     // ---------- Alerts ----------

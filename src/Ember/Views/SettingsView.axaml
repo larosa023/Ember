@@ -73,6 +73,15 @@
               </StackPanel>
             </DockPanel>
           </Border>
+          <Border Classes="row">
+            <DockPanel>
+              <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding MemoryInMb}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Process memory in MB" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="Shows 1,567.4 MB like Task Manager. Off picks MB or GB automatically." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
         </StackPanel>
       </Border>
 

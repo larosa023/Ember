@@ -9,6 +9,12 @@ public static class Format
 
     public static bool UseFahrenheit { get; set; }
 
+    /// <summary>Show process memory as "1,567.4 MB" like Task Manager instead of picking KB/MB/GB.</summary>
+    public static bool ProcessMemoryInMb { get; set; }
+
+    public static string ProcessMemory(long bytes) =>
+        ProcessMemoryInMb ? $"{bytes / 1048576.0:N1} MB" : Bytes(bytes);
+
     public static string Temp(float? celsius)
     {
         if (celsius is not float c) return Dash;

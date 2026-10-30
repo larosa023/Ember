@@ -58,6 +58,19 @@ public partial class ProcessesViewModel : ViewModelBase
     public string GpuHeader => Header("gpu", "GPU");
     public string MemoryHeader => Header("mem", "Memory");
 
+    /// <summary>Set by the main view-model so the header menu and Settings share one saved setting.</summary>
+    public Action? ToggleMemoryUnitsRequested { get; set; }
+
+    public bool MemoryInMb => Format.ProcessMemoryInMb;
+
+    [RelayCommand]
+    private void ToggleMemoryUnits()
+    {
+        ToggleMemoryUnitsRequested?.Invoke();
+        OnPropertyChanged(nameof(MemoryInMb));
+        Refresh();
+    }
+
     private string Header(string key, string label) =>
         SortKey == key ? $"{label} {(_descending ? "↓" : "↑")}" : label;
 
@@ -100,6 +113,7 @@ public partial class ProcessesViewModel : ViewModelBase
     public void Update(IReadOnlyList<ProcessInfo> list)
     {
         _last = list;
+        OnPropertyChanged(nameof(MemoryInMb));   // stay in sync if the setting was changed on the Settings page
         var query = Search.Trim();
 
         // 1. Bucket processes by exe (or name when the path is hidden).
@@ -518,7 +532,7 @@ public partial class ProcessGroup : ObservableObject
         CpuText = Cpu < 0.05 ? "0%" : $"{Cpu:0.0}%";
         Gpu = Math.Min(procs.Sum(p => p.Gpu), 100);
         GpuText = Gpu < 0.05 ? "0%" : $"{Gpu:0.0}%";
-        MemoryText = Format.Bytes(Memory);
+        MemoryText = Format.ProcessMemory(Memory);
     }
 }
 
@@ -553,6 +567,6 @@ public partial class ProcessRow : ObservableObject
         CpuText = info.Cpu < 0.05 ? "0%" : $"{info.Cpu:0.0}%";
         Gpu = info.Gpu;
         GpuText = info.Gpu < 0.05 ? "0%" : $"{info.Gpu:0.0}%";
-        MemoryText = Format.Bytes(info.Memory);
+        MemoryText = Format.ProcessMemory(info.Memory);
     }
 }

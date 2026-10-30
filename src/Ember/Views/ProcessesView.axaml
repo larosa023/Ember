@@ -82,7 +82,18 @@
 
           <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch"
                   Width="{ReflectionBinding MemWidth, Source={x:Static vm:ColumnLayout.Instance}}"
-                  Content="{Binding MemoryHeader}" Command="{Binding SortCommand}" CommandParameter="mem" />
+                  Content="{Binding MemoryHeader}" Command="{Binding SortCommand}" CommandParameter="mem"
+                  ToolTip.Tip="Click to sort · right-click for units">
+            <Button.ContextMenu>
+              <ContextMenu>
+                <MenuItem Header="Show in MB (like Task Manager)" Command="{Binding ToggleMemoryUnitsCommand}">
+                  <MenuItem.Icon>
+                    <TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{Binding MemoryInMb}" />
+                  </MenuItem.Icon>
+                </MenuItem>
+              </ContextMenu>
+            </Button.ContextMenu>
+          </Button>
           <c:ColumnResizer Column="mem">
             <Border Classes="divider" />
           </c:ColumnResizer>

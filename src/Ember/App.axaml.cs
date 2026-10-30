@@ -44,6 +44,7 @@ public partial class App : Application
             var themes = new ThemeService();
             themes.ApplyByName(_settings.Current.Theme);
             Format.UseFahrenheit = _settings.Current.UseFahrenheit;
+            Format.ProcessMemoryInMb = _settings.Current.ProcessMemoryInMb;
             ColumnLayout.Instance.Attach(_settings);
 
             var history = new HistoryService(_settings);

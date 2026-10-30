@@ -20,6 +20,7 @@ public sealed class ProcessService
     private readonly Dictionary<int, Meta> _meta = new();
     private readonly Dictionary<string, (IImage? Icon, string? Description)> _byPath = new(StringComparer.OrdinalIgnoreCase);
     private readonly GpuProcessCounter _gpu = new();
+    private readonly PrivateWorkingSetCounter _privateMemory = new();
     private IImage? _genericIcon;
     private bool _genericLoaded;
 
@@ -40,6 +41,10 @@ public sealed class ProcessService
         var cores = Environment.ProcessorCount;
 
         Dictionary<int, double> gpuByPid;
+        Dictionary<int, long> privateByPid;
+        try { privateByPid = _privateMemory.Read(); }
+        catch { privateByPid = new Dictionary<int, long>(); }
+
         try { gpuByPid = _gpu.Read(); }
         catch { gpuByPid = new Dictionary<int, double>(); }
 
@@ -69,7 +74,11 @@ public sealed class ProcessService
                 alive.Add(pid);
 
                 long memory = 0;
-                try { memory = p.WorkingSet64; } catch { }
+                // Task Manager's number (private working set); full working set if that's unavailable.
+                if (!privateByPid.TryGetValue(pid, out memory))
+                {
+                    try { memory = p.WorkingSet64; } catch { }
+                }
 
                 double cpu = 0;
                 try

@@ -59,6 +59,7 @@ public sealed class AppSettings
     public string Theme { get; set; } = "Ember";
     public int RefreshMs { get; set; } = 1000;
     public bool UseFahrenheit { get; set; }
+    public bool ProcessMemoryInMb { get; set; }
     public bool AutoCheckUpdates { get; set; } = true;
     public bool MinimizeToTray { get; set; } = true;
     public bool CloseToTray { get; set; }
