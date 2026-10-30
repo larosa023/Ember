@@ -234,14 +234,143 @@ public partial class ProcessesViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(HasSelection))]
     private void EndTree() => Kill(tree: true);
 
+    /// <summary>The processes an action applies to: every process in a group, or the one row.</summary>
+    private List<(int Pid, string Name)> Targets() => Selected switch
+    {
+        ProcessGroup g => g.Children.Select(c => (c.Pid, c.Name)).ToList(),
+        ProcessRow r => new List<(int Pid, string Name)> { (r.Pid, r.Name) },
+        _ => new List<(int Pid, string Name)>(),
+    };
+
+    private string TargetLabel() => Selected switch
+    {
+        ProcessGroup g => g.Name,
+        ProcessRow r => r.Name,
+        _ => "",
+    };
+
+    private (string? Path, int Pid) TargetPath() => Selected switch
+    {
+        ProcessGroup g => (g.Path, g.FirstPid),
+        ProcessRow r => (r.Path, r.Pid),
+        _ => (null, 0),
+    };
+
+    // ---------- Right-click menu ----------
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PriorityHigh), nameof(PriorityAboveNormal), nameof(PriorityNormal),
+                              nameof(PriorityBelowNormal), nameof(PriorityLow))]
+    private uint _menuPriority;
+
+    [ObservableProperty] private bool _menuEfficiency;
+
+    public bool PriorityHigh => MenuPriority == Services.Native.HighPriority;
+    public bool PriorityAboveNormal => MenuPriority == Services.Native.AboveNormalPriority;
+    public bool PriorityNormal => MenuPriority == Services.Native.NormalPriority;
+    public bool PriorityBelowNormal => MenuPriority == Services.Native.BelowNormalPriority;
+    public bool PriorityLow => MenuPriority == Services.Native.IdlePriority;
+
+    /// <summary>Called as the menu opens: false cancels it (nothing selected / a section header).</summary>
+    public bool PrepareMenu()
+    {
+        var targets = Targets();
+        if (targets.Count == 0) return false;
+        MenuPriority = Services.Native.GetPriority(targets[0].Pid) ?? 0;
+        MenuEfficiency = Services.Native.IsEfficiencyMode(targets[0].Pid) == true;
+        return true;
+    }
+
+    [RelayCommand]
+    private void SetPriority(string level)
+    {
+        var cls = level switch
+        {
+            "high" => Services.Native.HighPriority,
+            "above" => Services.Native.AboveNormalPriority,
+            "below" => Services.Native.BelowNormalPriority,
+            "low" => Services.Native.IdlePriority,
+            _ => Services.Native.NormalPriority,
+        };
+        var name = level switch
+        {
+            "high" => "High",
+            "above" => "Above normal",
+            "below" => "Below normal",
+            "low" => "Low",
+            _ => "Normal",
+        };
+        Apply(pid => Services.Native.SetPriority(pid, cls), $"priority set to {name}");
+    }
+
+    [RelayCommand]
+    private void ToggleEfficiency()
+    {
+        var on = !MenuEfficiency;
+        Apply(pid => Services.Native.SetEfficiencyMode(pid, on), on ? "efficiency mode on" : "efficiency mode off");
+    }
+
+    private void Apply(Func<int, bool> action, string what)
+    {
+        var targets = Targets();
+        if (targets.Count == 0) return;
+        var label = TargetLabel();
+        if (targets.Any(t => Protected.Contains(t.Name)))
+        {
+            Status = $"{label} is a core Windows process, so Ember won't change it.";
+            return;
+        }
+
+        int ok = targets.Count(t =>
+        {
+            try { return action(t.Pid); }
+            catch { return false; }
+        });
+
+        Status = ok == targets.Count ? $"{label}: {what}."
+            : ok == 0 ? $"Couldn't change {label}. It may need admin (\"Restart as admin\")."
+            : $"{label}: {what} for {ok} of {targets.Count} processes; the rest need admin.";
+    }
+
+    [RelayCommand]
+    private void SearchOnline()
+    {
+        var (path, _) = TargetPath();
+        var exe = !string.IsNullOrEmpty(path) ? System.IO.Path.GetFileName(path) : TargetLabel();
+        if (string.IsNullOrWhiteSpace(exe)) return;
+        try
+        {
+            Process.Start(new ProcessStartInfo($"https://www.bing.com/search?q={Uri.EscapeDataString(exe + " process")}")
+            {
+                UseShellExecute = true,
+            });
+        }
+        catch { }
+    }
+
+    [RelayCommand]
+    private async Task CopyPath()
+    {
+        var (path, _) = TargetPath();
+        var text = !string.IsNullOrEmpty(path) ? path : TargetLabel();
+        if (App.Clipboard is { } clipboard && !string.IsNullOrEmpty(text))
+        {
+            await clipboard.SetTextAsync(text);
+            Status = "Copied to clipboard.";
+        }
+    }
+
+    [RelayCommand]
+    private void ShowProperties()
+    {
+        var (path, _) = TargetPath();
+        if (string.IsNullOrEmpty(path) || !Services.Native.ShowFileProperties(path))
+            Status = $"Couldn't open properties for {TargetLabel()}. Try running as admin.";
+    }
+
     private void Kill(bool tree)
     {
-        var targets = Selected switch
-        {
-            ProcessGroup g => g.Children.Select(c => (c.Pid, c.Name)).ToList(),
-            ProcessRow r => new List<(int Pid, string Name)> { (r.Pid, r.Name) },
-            _ => new List<(int Pid, string Name)>(),
-        };
+        var targets = Targets();
         if (targets.Count == 0) return;
 
         var label = Selected is ProcessGroup group ? group.Name : targets[0].Name;

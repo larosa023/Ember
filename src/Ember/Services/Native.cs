@@ -39,6 +39,131 @@ internal static class Native
         }
     }
 
+    // ---------- Priority & efficiency mode ----------
+
+    private const uint ProcessSetInformation = 0x0200;
+    private const int ProcessPowerThrottling = 4;          // PROCESS_INFORMATION_CLASS
+    private const uint ThrottleExecutionSpeed = 0x1;       // PROCESS_POWER_THROTTLING_EXECUTION_SPEED
+
+    public const uint IdlePriority = 0x40, BelowNormalPriority = 0x4000, NormalPriority = 0x20,
+                      AboveNormalPriority = 0x8000, HighPriority = 0x80;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct PowerThrottlingState
+    {
+        public uint Version;
+        public uint ControlMask;
+        public uint StateMask;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern uint GetPriorityClass(IntPtr process);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool SetPriorityClass(IntPtr process, uint priorityClass);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool SetProcessInformation(IntPtr process, int infoClass, ref PowerThrottlingState info, uint size);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool GetProcessInformation(IntPtr process, int infoClass, ref PowerThrottlingState info, uint size);
+
+    public static uint? GetPriority(int pid)
+    {
+        var h = OpenProcess(ProcessQueryLimitedInformation, false, pid);
+        if (h == IntPtr.Zero) return null;
+        try
+        {
+            var p = GetPriorityClass(h);
+            return p == 0 ? null : p;
+        }
+        finally { CloseHandle(h); }
+    }
+
+    public static bool SetPriority(int pid, uint priorityClass)
+    {
+        var h = OpenProcess(ProcessSetInformation | ProcessQueryLimitedInformation, false, pid);
+        if (h == IntPtr.Zero) return false;
+        try { return SetPriorityClass(h, priorityClass); }
+        finally { CloseHandle(h); }
+    }
+
+    /// <summary>True if Windows 11 "Efficiency mode" (EcoQoS) is on for the process; null if unknown.</summary>
+    public static bool? IsEfficiencyMode(int pid)
+    {
+        var h = OpenProcess(ProcessQueryLimitedInformation, false, pid);
+        if (h == IntPtr.Zero) return null;
+        try
+        {
+            var state = new PowerThrottlingState { Version = 1 };
+            if (!GetProcessInformation(h, ProcessPowerThrottling, ref state, (uint)Marshal.SizeOf<PowerThrottlingState>()))
+                return null;
+            return (state.ControlMask & ThrottleExecutionSpeed) != 0 && (state.StateMask & ThrottleExecutionSpeed) != 0;
+        }
+        catch (EntryPointNotFoundException) { return null; }
+        finally { CloseHandle(h); }
+    }
+
+    /// <summary>Efficiency mode the way Task Manager does it: EcoQoS throttling plus idle priority.</summary>
+    public static bool SetEfficiencyMode(int pid, bool on)
+    {
+        var h = OpenProcess(ProcessSetInformation | ProcessQueryLimitedInformation, false, pid);
+        if (h == IntPtr.Zero) return false;
+        try
+        {
+            var state = new PowerThrottlingState
+            {
+                Version = 1,
+                ControlMask = ThrottleExecutionSpeed,
+                StateMask = on ? ThrottleExecutionSpeed : 0,
+            };
+            var ok = SetProcessInformation(h, ProcessPowerThrottling, ref state, (uint)Marshal.SizeOf<PowerThrottlingState>());
+            ok &= SetPriorityClass(h, on ? IdlePriority : NormalPriority);
+            return ok;
+        }
+        catch (EntryPointNotFoundException) { return false; }
+        finally { CloseHandle(h); }
+    }
+
+    // ---------- File properties dialog ----------
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct ShellExecuteInfo
+    {
+        public int cbSize;
+        public uint fMask;
+        public IntPtr hwnd;
+        public string? lpVerb;
+        public string lpFile;
+        public string? lpParameters;
+        public string? lpDirectory;
+        public int nShow;
+        public IntPtr hInstApp;
+        public IntPtr lpIDList;
+        public string? lpClass;
+        public IntPtr hkeyClass;
+        public uint dwHotKey;
+        public IntPtr hIcon;
+        public IntPtr hProcess;
+    }
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode, EntryPoint = "ShellExecuteExW", SetLastError = true)]
+    private static extern bool ShellExecuteEx(ref ShellExecuteInfo info);
+
+    /// <summary>Opens Explorer's Properties window for a file.</summary>
+    public static bool ShowFileProperties(string path)
+    {
+        var info = new ShellExecuteInfo
+        {
+            cbSize = Marshal.SizeOf<ShellExecuteInfo>(),
+            fMask = 0x0000000C,   // SEE_MASK_INVOKEIDLIST
+            lpVerb = "properties",
+            lpFile = path,
+            nShow = 5,            // SW_SHOW
+        };
+        return ShellExecuteEx(ref info);
+    }
+
     // ---------- Windows (to tell "apps" from background processes) ----------
 
     private delegate bool EnumWindowsProc(IntPtr hwnd, IntPtr lParam);

@@ -94,6 +94,58 @@
             <KeyBinding Gesture="Delete" Command="{Binding EndTaskCommand}" />
           </ListBox.KeyBindings>
 
+          <ListBox.ContextMenu>
+        <ContextMenu Opening="OnMenuOpening">
+          <MenuItem Header="End task" Command="{Binding EndTaskCommand}" InputGesture="Delete">
+            <MenuItem.Icon><TextBlock Classes="icon" FontSize="13" Text="&#xE711;" /></MenuItem.Icon>
+          </MenuItem>
+          <MenuItem Header="End process tree" Command="{Binding EndTreeCommand}">
+            <MenuItem.Icon><TextBlock Classes="icon" FontSize="13" Text="&#xE8EC;" /></MenuItem.Icon>
+          </MenuItem>
+          <Separator />
+          <MenuItem Header="Priority">
+            <MenuItem.Icon><TextBlock Classes="icon" FontSize="13" Text="&#xE9D9;" /></MenuItem.Icon>
+            <MenuItem Header="High" Command="{Binding SetPriorityCommand}" CommandParameter="high">
+              <MenuItem.Icon><TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{Binding PriorityHigh}" /></MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="Above normal" Command="{Binding SetPriorityCommand}" CommandParameter="above">
+              <MenuItem.Icon><TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{Binding PriorityAboveNormal}" /></MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="Normal" Command="{Binding SetPriorityCommand}" CommandParameter="normal">
+              <MenuItem.Icon><TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{Binding PriorityNormal}" /></MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="Below normal" Command="{Binding SetPriorityCommand}" CommandParameter="below">
+              <MenuItem.Icon><TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{Binding PriorityBelowNormal}" /></MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="Low" Command="{Binding SetPriorityCommand}" CommandParameter="low">
+              <MenuItem.Icon><TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{Binding PriorityLow}" /></MenuItem.Icon>
+            </MenuItem>
+          </MenuItem>
+          <MenuItem Header="Efficiency mode" Command="{Binding ToggleEfficiencyCommand}">
+            <MenuItem.Icon>
+              <Panel>
+                <TextBlock Classes="icon" FontSize="13" Text="&#xEC0A;" IsVisible="{Binding !MenuEfficiency}" />
+                <TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{Binding MenuEfficiency}" />
+              </Panel>
+            </MenuItem.Icon>
+          </MenuItem>
+          <Separator />
+          <MenuItem Header="Open file location" Command="{Binding OpenLocationCommand}">
+            <MenuItem.Icon><TextBlock Classes="icon" FontSize="13" Text="&#xE838;" /></MenuItem.Icon>
+          </MenuItem>
+          <MenuItem Header="Search online" Command="{Binding SearchOnlineCommand}">
+            <MenuItem.Icon><TextBlock Classes="icon" FontSize="13" Text="&#xE721;" /></MenuItem.Icon>
+          </MenuItem>
+          <MenuItem Header="Copy path" Command="{Binding CopyPathCommand}">
+            <MenuItem.Icon><TextBlock Classes="icon" FontSize="13" Text="&#xE8C8;" /></MenuItem.Icon>
+          </MenuItem>
+          <MenuItem Header="Properties" Command="{Binding ShowPropertiesCommand}">
+            <MenuItem.Icon><TextBlock Classes="icon" FontSize="13" Text="&#xE946;" /></MenuItem.Icon>
+          </MenuItem>
+        </ContextMenu>
+      </ListBox.ContextMenu>
+
+
           <ListBox.DataTemplates>
 
             <!-- Section header: "Apps (5)" -->
