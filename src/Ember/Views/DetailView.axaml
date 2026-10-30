@@ -8,7 +8,7 @@
   <ScrollViewer>
     <StackPanel Spacing="18">
 
-      <Button Classes="back" Command="{Binding BackCommand}" HorizontalAlignment="Left">
+      <Button Classes="ghost" Command="{Binding BackCommand}" HorizontalAlignment="Left" Margin="-10,-6,0,-4">
         <StackPanel Orientation="Horizontal" Spacing="8">
           <TextBlock Classes="icon" FontSize="12" Text="&#xE72B;" />
           <TextBlock Text="Dashboard" />
@@ -43,7 +43,7 @@
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="vm:StatTile">
-            <Border Classes="card" Width="190" Padding="16,14">
+            <Border Classes="card" Width="186" Padding="16,14">
               <StackPanel Spacing="4">
                 <TextBlock Classes="label" Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
                 <TextBlock Classes="stat" FontSize="18" Text="{Binding Value}" TextTrimming="CharacterEllipsis" />

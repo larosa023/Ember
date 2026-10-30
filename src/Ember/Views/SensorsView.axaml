@@ -4,50 +4,89 @@
              x:Class="Ember.Views.SensorsView"
              x:DataType="vm:SensorsViewModel">
 
-  <ScrollViewer>
-    <StackPanel Spacing="18">
-      <StackPanel Spacing="2">
-        <TextBlock Classes="h1" Text="Sensors" />
-        <TextBlock Classes="label" Text="{Binding Summary}" />
-      </StackPanel>
+  <DockPanel>
+    <StackPanel DockPanel.Dock="Top" Classes="pageheader">
+      <TextBlock Classes="h1" Text="Sensors" />
+      <TextBlock Classes="subtitle" Text="{Binding Summary}" />
+    </StackPanel>
 
-      <ItemsControl ItemsSource="{Binding Groups}">
+    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+        <Button Classes="ghost" Content="Expand all" Command="{Binding ExpandAllCommand}" />
+        <Button Classes="ghost" Content="Collapse all" Command="{Binding CollapseAllCommand}" />
+      </StackPanel>
+      <TextBox Classes="search" Width="320" HorizontalAlignment="Left"
+               Watermark="Filter sensors" Text="{Binding Search}">
+        <TextBox.InnerLeftContent>
+          <TextBlock Classes="icon" FontSize="13" Margin="10,0,2,0" Foreground="{DynamicResource TextMuted}" Text="&#xE721;" />
+        </TextBox.InnerLeftContent>
+      </TextBox>
+    </DockPanel>
+
+    <ScrollViewer>
+      <ItemsControl ItemsSource="{Binding Cards}">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
-            <StackPanel Spacing="16" />
+            <StackPanel Spacing="10" />
           </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
-          <DataTemplate x:DataType="vm:SensorGroup">
-            <Border Classes="card">
+          <DataTemplate x:DataType="vm:HardwareCard">
+            <Border Classes="card" Padding="18,14">
               <StackPanel Spacing="10">
-                <TextBlock Classes="h2" Text="{Binding Name}" />
-                <Grid ColumnDefinitions="*,110,110,110">
-                  <TextBlock Grid.Column="0" Classes="eyebrow" Text="SENSOR" />
-                  <TextBlock Grid.Column="1" Classes="eyebrow" Text="NOW" HorizontalAlignment="Right" />
-                  <TextBlock Grid.Column="2" Classes="eyebrow" Text="MIN" HorizontalAlignment="Right" />
-                  <TextBlock Grid.Column="3" Classes="eyebrow" Text="MAX" HorizontalAlignment="Right" />
-                </Grid>
-                <ItemsControl ItemsSource="{Binding Rows}">
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:SensorRow">
-                      <Grid ColumnDefinitions="*,110,110,110" Margin="0,5">
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                          <TextBlock Text="{Binding Name}" />
-                          <TextBlock Classes="label" Text="{Binding Type}" VerticalAlignment="Center" />
+
+                <!-- Card header: click anywhere to collapse -->
+                <Button Classes="disclosure" Command="{Binding ToggleCommand}">
+                  <DockPanel>
+                    <TextBlock DockPanel.Dock="Left" Classes="icon" FontSize="10" Width="18"
+                               Foreground="{DynamicResource TextMuted}" Text="{Binding Chevron}" />
+                    <TextBlock DockPanel.Dock="Right" Classes="label" VerticalAlignment="Center" Text="{Binding CountText}" />
+                    <TextBlock Classes="h2" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                  </DockPanel>
+                </Button>
+
+                <StackPanel Spacing="14" IsVisible="{Binding IsExpanded}" Margin="18,2,0,0">
+                  <Grid ColumnDefinitions="*,110,96,96">
+                    <TextBlock Grid.Column="1" Classes="eyebrow" Text="NOW" HorizontalAlignment="Right" />
+                    <TextBlock Grid.Column="2" Classes="eyebrow" Text="MIN" HorizontalAlignment="Right" />
+                    <TextBlock Grid.Column="3" Classes="eyebrow" Text="MAX" HorizontalAlignment="Right" />
+                  </Grid>
+
+                  <ItemsControl ItemsSource="{Binding Sections}">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate>
+                        <StackPanel Spacing="14" />
+                      </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:SensorGroup">
+                        <StackPanel Spacing="2">
+                          <TextBlock Classes="eyebrow" Text="{Binding Name}" Foreground="{DynamicResource Accent}" Margin="0,0,0,2" />
+                          <ItemsControl ItemsSource="{Binding Rows}">
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate x:DataType="vm:SensorRow">
+                                <Border Classes="row compact">
+                                  <Grid ColumnDefinitions="*,110,96,96">
+                                    <TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Value}" FontWeight="SemiBold" HorizontalAlignment="Right" />
+                                    <TextBlock Grid.Column="2" Classes="label" Text="{Binding Min}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="3" Classes="label" Text="{Binding Max}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                  </Grid>
+                                </Border>
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
                         </StackPanel>
-                        <TextBlock Grid.Column="1" Text="{Binding Value}" FontWeight="SemiBold" HorizontalAlignment="Right" />
-                        <TextBlock Grid.Column="2" Classes="label" Text="{Binding Min}" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                        <TextBlock Grid.Column="3" Classes="label" Text="{Binding Max}" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                      </Grid>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+
               </StackPanel>
             </Border>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
-    </StackPanel>
-  </ScrollViewer>
+    </ScrollViewer>
+  </DockPanel>
 </UserControl>

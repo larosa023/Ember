@@ -6,14 +6,19 @@
              x:DataType="vm:FansViewModel">
 
   <ScrollViewer>
-    <StackPanel Spacing="16" MaxWidth="900" HorizontalAlignment="Left">
+    <StackPanel Spacing="14" MaxWidth="900" HorizontalAlignment="Left">
 
-      <DockPanel>
-        <Button DockPanel.Dock="Right" VerticalAlignment="Center"
-                Content="Give all fans back to BIOS" Command="{Binding RestoreAllCommand}" />
-        <StackPanel Spacing="2">
+      <DockPanel Margin="0,0,0,4">
+        <Button DockPanel.Dock="Right" Classes="ghost" VerticalAlignment="Center"
+                Command="{Binding RestoreAllCommand}" ToolTip.Tip="Give every fan back to BIOS control">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Classes="icon" FontSize="13" Text="&#xE777;" />
+            <TextBlock Text="Reset all to BIOS" />
+          </StackPanel>
+        </Button>
+        <StackPanel>
           <TextBlock Classes="h1" Text="Fans" />
-          <TextBlock Classes="label" Text="{Binding Summary}" />
+          <TextBlock Classes="subtitle" Text="{Binding Summary}" />
         </StackPanel>
       </DockPanel>
 
@@ -69,9 +74,9 @@
                 <StackPanel Spacing="10" IsVisible="{Binding IsCurve}">
                   <DockPanel>
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
-                      <Button Content="Silent" Command="{Binding PresetCommand}" CommandParameter="silent" />
-                      <Button Content="Balanced" Command="{Binding PresetCommand}" CommandParameter="balanced" />
-                      <Button Content="Performance" Command="{Binding PresetCommand}" CommandParameter="performance" />
+                      <Button Classes="ghost" Content="Silent" Command="{Binding PresetCommand}" CommandParameter="silent" />
+                      <Button Classes="ghost" Content="Balanced" Command="{Binding PresetCommand}" CommandParameter="balanced" />
+                      <Button Classes="ghost" Content="Performance" Command="{Binding PresetCommand}" CommandParameter="performance" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="10">
                       <TextBlock Classes="label" Text="Follow" VerticalAlignment="Center" />

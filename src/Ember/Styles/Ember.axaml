@@ -2,13 +2,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:c="using:Ember.Controls">
 
-  <!-- Base -->
+  <!-- ======================= Base ======================= -->
   <Style Selector=":is(Window)">
     <Setter Property="Background" Value="{DynamicResource Bg}" />
     <Setter Property="Foreground" Value="{DynamicResource Text}" />
   </Style>
 
-  <!-- Typography -->
+  <!-- ======================= Typography ======================= -->
   <Style Selector="TextBlock.h1">
     <Setter Property="FontSize" Value="24" />
     <Setter Property="FontWeight" Value="SemiBold" />
@@ -16,6 +16,11 @@
   <Style Selector="TextBlock.h2">
     <Setter Property="FontSize" Value="15" />
     <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style Selector="TextBlock.subtitle">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+    <Setter Property="Margin" Value="0,2,0,0" />
   </Style>
   <Style Selector="TextBlock.label">
     <Setter Property="FontSize" Value="12" />
@@ -41,12 +46,17 @@
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
-  <!-- Cards -->
+  <!-- Page header block (title + subtitle) used at the top of every page -->
+  <Style Selector="StackPanel.pageheader">
+    <Setter Property="Margin" Value="0,0,0,20" />
+  </Style>
+
+  <!-- ======================= Surfaces ======================= -->
   <Style Selector="Border.card">
     <Setter Property="Background" Value="{DynamicResource Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Stroke}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="16" />
+    <Setter Property="CornerRadius" Value="14" />
     <Setter Property="Padding" Value="20" />
   </Style>
   <Style Selector="Border.banner">
@@ -54,8 +64,55 @@
     <Setter Property="CornerRadius" Value="12" />
     <Setter Property="Padding" Value="12" />
   </Style>
+  <Style Selector="Border.pill">
+    <Setter Property="Background" Value="{DynamicResource SurfaceAlt}" />
+    <Setter Property="CornerRadius" Value="999" />
+    <Setter Property="Padding" Value="9,3" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
 
-  <!-- Sidebar navigation -->
+  <!-- List rows inside a card, separated by hairlines (last row has none) -->
+  <Style Selector="Border.row">
+    <Setter Property="Padding" Value="0,13" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Stroke}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="Border.row:nth-last-child(1)">
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="ContentPresenter:nth-last-child(1) > Border.row">
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="Border.row.compact">
+    <Setter Property="Padding" Value="0,7" />
+  </Style>
+
+  <!-- ======================= Sidebar ======================= -->
+  <Style Selector="Border.sidebar">
+    <Setter Property="Background" Value="{DynamicResource Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Stroke}" />
+    <Setter Property="BorderThickness" Value="0,0,1,0" />
+  </Style>
+
+  <Style Selector="Border.sidebar .collapsed-only">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+  <Style Selector="Border.sidebar.collapsed .collapsed-only">
+    <Setter Property="IsVisible" Value="True" />
+  </Style>
+  <Style Selector="Border.sidebar.collapsed .expanded-only">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+  <Style Selector="Border.sidebar.collapsed .navlabel">
+    <Setter Property="IsVisible" Value="False" />
+  </Style>
+  <!-- Collapsed: each nav button shows its Tag as a tooltip -->
+  <Style Selector="Border.sidebar.collapsed Button.nav">
+    <Setter Property="ToolTip.Tip" Value="{ReflectionBinding Tag, RelativeSource={RelativeSource Self}}" />
+    <Setter Property="ToolTip.Placement" Value="Right" />
+  </Style>
+
   <Style Selector="Button.nav">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
@@ -83,90 +140,46 @@
     <Setter Property="Foreground" Value="{DynamicResource Accent}" />
   </Style>
 
-  <!-- Clickable column headers -->
-  <Style Selector="Button.header">
+  <!-- Square icon-only buttons (collapsed sidebar actions) -->
+  <Style Selector="Button.iconbtn">
+    <Setter Property="Width" Value="44" />
+    <Setter Property="Height" Value="40" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="ToolTip.Placement" Value="Right" />
+  </Style>
+  <Style Selector="Button.iconbtn.warn">
+    <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
+    <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <!-- ======================= Inputs & buttons ======================= -->
+  <Style Selector="TextBox.search">
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="MinHeight" Value="36" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+
+  <!-- Quiet text buttons (toolbars, "Dashboard" back link) -->
+  <Style Selector="Button.ghost">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
     <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Padding" Value="0" />
-    <Setter Property="FontSize" Value="12" />
-    <Setter Property="FontWeight" Value="SemiBold" />
-  </Style>
-  <Style Selector="Button.header:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="Foreground" Value="{DynamicResource Text}" />
-  </Style>
-  <Style Selector="Button.header:pressed /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="Transparent" />
-  </Style>
-
-  <!-- Process list rows -->
-  <Style Selector="ListBox.rows">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="Padding" Value="6,0,6,6" />
-  </Style>
-  <!-- Clickable dashboard cards -->
-  <Style Selector="Button.tile">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="Foreground" Value="{DynamicResource Text}" />
-    <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Padding" Value="0" />
-    <Setter Property="CornerRadius" Value="16" />
-    <Setter Property="HorizontalAlignment" Value="Stretch" />
-    <Setter Property="VerticalAlignment" Value="Stretch" />
-    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-    <Setter Property="VerticalContentAlignment" Value="Stretch" />
-    <Setter Property="Cursor" Value="Hand" />
-  </Style>
-  <Style Selector="Button.tile:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="Foreground" Value="{DynamicResource Text}" />
-  </Style>
-  <Style Selector="Button.tile:pressed /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="Foreground" Value="{DynamicResource Text}" />
-  </Style>
-  <Style Selector="Button.tile:pointerover Border.card">
-    <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
-  </Style>
-
-  <!-- "← Dashboard" link on detail pages -->
-  <Style Selector="Button.back">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
-    <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Padding" Value="8,6" />
+    <Setter Property="Padding" Value="10,7" />
     <Setter Property="CornerRadius" Value="8" />
   </Style>
-  <Style Selector="Button.back:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+  <Style Selector="Button.ghost:pointerover /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource SurfaceAlt}" />
     <Setter Property="Foreground" Value="{DynamicResource Text}" />
   </Style>
-
-  <!-- Per-core usage bars -->
-  <Style Selector="c|UsageBar">
-    <Setter Property="TrackBrush" Value="{DynamicResource Stroke}" />
-    <Setter Property="FillBrush" Value="{DynamicResource Accent}" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <DoubleTransition Property="Value" Duration="0:0:0.35" Easing="CubicEaseOut" />
-      </Transitions>
-    </Setter>
+  <Style Selector="Button.ghost:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
   </Style>
 
-  <!-- Column header dividers (inside c:ColumnResizer) -->
-  <Style Selector="Border.divider">
-    <Setter Property="Width" Value="1" />
-    <Setter Property="Margin" Value="0,8" />
-    <Setter Property="HorizontalAlignment" Value="Center" />
-    <Setter Property="Background" Value="{DynamicResource Stroke}" />
-  </Style>
-  <Style Selector="c|ColumnResizer:pointerover > Border.divider">
-    <Setter Property="Width" Value="2" />
-    <Setter Property="Background" Value="{DynamicResource Accent}" />
-  </Style>
-
-  <!-- Small expand/collapse chevron on grouped processes -->
+  <!-- Disclosure chevrons (process groups, sensor cards) -->
   <Style Selector="Button.chevron">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
@@ -183,8 +196,96 @@
     <Setter Property="Foreground" Value="{DynamicResource Text}" />
   </Style>
 
+  <!-- Full-width header that toggles a section (sensor cards) -->
+  <Style Selector="Button.disclosure">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="Foreground" Value="{DynamicResource Text}" />
+  </Style>
+  <Style Selector="Button.disclosure:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Text}" />
+  </Style>
+  <Style Selector="Button.disclosure:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+
+  <!-- ======================= Dashboard ======================= -->
+  <Style Selector="Button.tile">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Text}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="CornerRadius" Value="14" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="VerticalContentAlignment" Value="Stretch" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button.tile:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Text}" />
+  </Style>
+  <Style Selector="Button.tile:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Text}" />
+  </Style>
+  <Style Selector="Button.tile Border.card">
+    <Setter Property="Transitions">
+      <Transitions>
+        <BrushTransition Property="BorderBrush" Duration="0:0:0.12" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Button.tile:pointerover Border.card">
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+  </Style>
+  <Style Selector="Button.tile TextBlock.open">
+    <Setter Property="Opacity" Value="0.45" />
+  </Style>
+  <Style Selector="Button.tile:pointerover TextBlock.open">
+    <Setter Property="Opacity" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+  </Style>
+
+  <!-- ======================= Process list ======================= -->
+  <Style Selector="Button.header">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style Selector="Button.header:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Text}" />
+  </Style>
+  <Style Selector="Button.header:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+
+  <Style Selector="Border.divider">
+    <Setter Property="Width" Value="1" />
+    <Setter Property="Margin" Value="0,9" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="Background" Value="{DynamicResource Stroke}" />
+  </Style>
+  <Style Selector="c|ColumnResizer:pointerover > Border.divider">
+    <Setter Property="Width" Value="2" />
+    <Setter Property="Background" Value="{DynamicResource Accent}" />
+  </Style>
+
+  <Style Selector="ListBox.rows">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Padding" Value="6,4,6,6" />
+  </Style>
   <Style Selector="ListBox.rows ListBoxItem">
-    <Setter Property="Padding" Value="10,7" />
+    <Setter Property="Padding" Value="10,6" />
     <Setter Property="MinHeight" Value="0" />
     <Setter Property="CornerRadius" Value="8" />
   </Style>
@@ -195,13 +296,22 @@
     <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
   </Style>
 
-  <!-- Gauges animate smoothly between readings -->
+  <!-- ======================= Custom controls ======================= -->
   <Style Selector="c|RingGauge">
     <Setter Property="TrackBrush" Value="{DynamicResource SurfaceAlt}" />
     <Setter Property="FillBrush" Value="{DynamicResource Accent}" />
     <Setter Property="Transitions">
       <Transitions>
         <DoubleTransition Property="Value" Duration="0:0:0.45" Easing="CubicEaseOut" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="c|UsageBar">
+    <Setter Property="TrackBrush" Value="{DynamicResource Stroke}" />
+    <Setter Property="FillBrush" Value="{DynamicResource Accent}" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <DoubleTransition Property="Value" Duration="0:0:0.35" Easing="CubicEaseOut" />
       </Transitions>
     </Setter>
   </Style>

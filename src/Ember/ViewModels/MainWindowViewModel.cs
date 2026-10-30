@@ -11,6 +11,7 @@ namespace Ember.ViewModels;
 public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly MonitorHost _host;
+    private readonly SettingsService _settings;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsDashboard), nameof(IsProcesses), nameof(IsSensors), nameof(IsFans), nameof(IsStartup), nameof(IsSettings))]
@@ -19,6 +20,8 @@ public partial class MainWindowViewModel : ViewModelBase
     public MainWindowViewModel(MonitorHost host, SettingsService settings, ThemeService themes, UpdateService updates)
     {
         _host = host;
+        _settings = settings;
+        _isSidebarCollapsed = settings.Current.SidebarCollapsed;
         Settings = new SettingsViewModel(settings, themes, updates, host);
         Fans = new FansViewModel(settings, host);
         CpuDetail = new DetailViewModel(DetailKind.Cpu, () => CurrentPage = Dashboard);
@@ -50,6 +53,23 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool IsFans => CurrentPage == Fans;
     public bool IsStartup => CurrentPage == Startup;
     public bool IsSettings => CurrentPage == Settings;
+
+    // ---------- Sidebar ----------
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SidebarWidth))]
+    private bool _isSidebarCollapsed;
+
+    public double SidebarWidth => IsSidebarCollapsed ? 68 : 224;
+
+    [RelayCommand]
+    private void ToggleSidebar() => IsSidebarCollapsed = !IsSidebarCollapsed;
+
+    partial void OnIsSidebarCollapsedChanged(bool value)
+    {
+        _settings.Current.SidebarCollapsed = value;
+        _settings.Save();
+    }
 
     public bool IsElevated => Environment.IsPrivilegedProcess;
     public string VersionText => $"v{AppInfo.Version}";

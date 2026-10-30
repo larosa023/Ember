@@ -5,99 +5,139 @@
         x:DataType="vm:MainWindowViewModel"
         Title="Ember"
         Icon="/Assets/ember.ico"
-        Width="1180" Height="760" MinWidth="980" MinHeight="640"
+        Width="1180" Height="760" MinWidth="860" MinHeight="600"
         WindowStartupLocation="CenterScreen"
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaTitleBarHeightHint="40">
 
-  <Grid ColumnDefinitions="224,*">
+  <Window.KeyBindings>
+    <KeyBinding Gesture="Ctrl+B" Command="{Binding ToggleSidebarCommand}" />
+  </Window.KeyBindings>
 
-    <!-- Sidebar -->
-    <Border Grid.Column="0"
-            Background="{DynamicResource Surface}"
-            BorderBrush="{DynamicResource Stroke}"
-            BorderThickness="0,0,1,0">
-      <DockPanel Margin="14,16,14,16">
+  <Grid ColumnDefinitions="Auto,*">
 
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="10"
-                    Margin="8,2,0,28" IsHitTestVisible="False">
-          <Ellipse Width="14" Height="14" Fill="{DynamicResource Accent}" VerticalAlignment="Center" />
-          <TextBlock Text="Ember" FontSize="19" FontWeight="SemiBold" />
+    <!-- Sidebar: Classes.collapsed drives the icon-only layout (see Styles/Ember.axaml) -->
+    <Border Grid.Column="0" Classes="sidebar" Classes.collapsed="{Binding IsSidebarCollapsed}"
+            Width="{Binding SidebarWidth}" ClipToBounds="True">
+      <Border.Transitions>
+        <Transitions>
+          <DoubleTransition Property="Width" Duration="0:0:0.18" Easing="CubicEaseOut" />
+        </Transitions>
+      </Border.Transitions>
+
+      <DockPanel Margin="12,12,12,14">
+
+        <!-- Toggle + brand -->
+        <Button DockPanel.Dock="Top" Classes="nav" Tag="Expand sidebar (Ctrl+B)" Margin="0,0,0,18"
+                Command="{Binding ToggleSidebarCommand}">
+          <StackPanel Orientation="Horizontal" Spacing="14">
+            <TextBlock Classes="icon" Text="&#xE700;" />
+            <StackPanel Classes="navlabel" Orientation="Horizontal" Spacing="8">
+              <Ellipse Width="10" Height="10" Fill="{DynamicResource Accent}" VerticalAlignment="Center" />
+              <TextBlock Text="Ember" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource Text}" />
+            </StackPanel>
+          </StackPanel>
+        </Button>
+
+        <!-- Bottom: update + driver/admin prompts + version -->
+        <StackPanel DockPanel.Dock="Bottom" Spacing="8">
+
+          <!-- Expanded -->
+          <StackPanel Classes="expanded-only" Spacing="10">
+            <Button Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                    IsVisible="{Binding Settings.UpdateReady}"
+                    Command="{Binding Settings.InstallUpdateCommand}"
+                    Content="Update ready · Restart" />
+
+            <Border Classes="banner" IsVisible="{Binding ShowDriverBanner}">
+              <StackPanel Spacing="8">
+                <TextBlock Text="Sensor driver needed" FontWeight="SemiBold" FontSize="13" />
+                <TextBlock Classes="label" TextWrapping="Wrap"
+                           Text="CPU temps and fan control need the free PawnIO driver." />
+                <Button Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                        IsEnabled="{Binding !IsInstallingDriver}"
+                        Command="{Binding InstallDriverCommand}" Content="Install driver" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="{Binding DriverStatus}"
+                           IsVisible="{Binding DriverStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+              </StackPanel>
+            </Border>
+
+            <Border Classes="banner" IsVisible="{Binding ShowAdminBanner}">
+              <StackPanel Spacing="8">
+                <TextBlock Text="CPU temps need admin" FontWeight="SemiBold" FontSize="13" />
+                <TextBlock Classes="label" TextWrapping="Wrap"
+                           Text="Windows hides some sensors and fan control from normal apps." />
+                <Button Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                        Command="{Binding RestartAsAdminCommand}" Content="Restart as admin" />
+              </StackPanel>
+            </Border>
+
+            <TextBlock Classes="label" Margin="12,0" Text="{Binding VersionText}" />
+          </StackPanel>
+
+          <!-- Collapsed: same actions as icon buttons -->
+          <StackPanel Classes="collapsed-only" Spacing="6">
+            <Button Classes="iconbtn accent" ToolTip.Tip="Update ready · Restart"
+                    IsVisible="{Binding Settings.UpdateReady}" Command="{Binding Settings.InstallUpdateCommand}">
+              <TextBlock Classes="icon" Text="&#xE896;" />
+            </Button>
+            <Button Classes="iconbtn warn" ToolTip.Tip="Install sensor driver (needed for CPU temps and fans)"
+                    IsVisible="{Binding ShowDriverBanner}" IsEnabled="{Binding !IsInstallingDriver}"
+                    Command="{Binding InstallDriverCommand}">
+              <TextBlock Classes="icon" Text="&#xE7BA;" />
+            </Button>
+            <Button Classes="iconbtn warn" ToolTip.Tip="Restart as admin (needed for CPU temps and fans)"
+                    IsVisible="{Binding ShowAdminBanner}" Command="{Binding RestartAsAdminCommand}">
+              <TextBlock Classes="icon" Text="&#xE7EF;" />
+            </Button>
+          </StackPanel>
         </StackPanel>
 
-        <StackPanel DockPanel.Dock="Bottom" Spacing="10">
-          <Button Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                  IsVisible="{Binding Settings.UpdateReady}"
-                  Command="{Binding Settings.InstallUpdateCommand}"
-                  Content="Update ready · Restart" />
-
-          <Border Classes="banner" IsVisible="{Binding ShowDriverBanner}">
-            <StackPanel Spacing="8">
-              <TextBlock Text="Sensor driver needed" FontWeight="SemiBold" FontSize="13" />
-              <TextBlock Classes="label" TextWrapping="Wrap"
-                         Text="CPU temps and fan control need the free PawnIO driver. One-time install." />
-              <Button Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                      IsEnabled="{Binding !IsInstallingDriver}"
-                      Command="{Binding InstallDriverCommand}" Content="Install driver" />
-              <TextBlock Classes="label" TextWrapping="Wrap" Text="{Binding DriverStatus}"
-                         IsVisible="{Binding DriverStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-            </StackPanel>
-          </Border>
-
-          <Border Classes="banner" IsVisible="{Binding ShowAdminBanner}">
-            <StackPanel Spacing="8">
-              <TextBlock Text="CPU temps need admin" FontWeight="SemiBold" FontSize="13" />
-              <TextBlock Classes="label" TextWrapping="Wrap"
-                         Text="Windows hides some sensors and fan control from normal apps." />
-              <Button Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                      Command="{Binding RestartAsAdminCommand}" Content="Restart as admin" />
-            </StackPanel>
-          </Border>
-
-          <TextBlock Classes="label" Margin="8,0" Text="{Binding VersionText}" />
-        </StackPanel>
-
-        <StackPanel Spacing="4">
-          <Button Classes="nav" Classes.active="{Binding IsDashboard}"
+        <!-- Navigation -->
+        <StackPanel Spacing="2">
+          <Button Classes="nav" Classes.active="{Binding IsDashboard}" Tag="Dashboard"
                   Command="{Binding NavigateCommand}" CommandParameter="dashboard">
-            <StackPanel Orientation="Horizontal" Spacing="12">
+            <StackPanel Orientation="Horizontal" Spacing="14">
               <TextBlock Classes="icon" Text="&#xE80F;" />
-              <TextBlock Text="Dashboard" />
+              <TextBlock Classes="navlabel" Text="Dashboard" />
             </StackPanel>
           </Button>
-          <Button Classes="nav" Classes.active="{Binding IsProcesses}"
+          <Button Classes="nav" Classes.active="{Binding IsProcesses}" Tag="Processes"
                   Command="{Binding NavigateCommand}" CommandParameter="processes">
-            <StackPanel Orientation="Horizontal" Spacing="12">
+            <StackPanel Orientation="Horizontal" Spacing="14">
               <TextBlock Classes="icon" Text="&#xE8FD;" />
-              <TextBlock Text="Processes" />
+              <TextBlock Classes="navlabel" Text="Processes" />
             </StackPanel>
           </Button>
-          <Button Classes="nav" Classes.active="{Binding IsSensors}"
+          <Button Classes="nav" Classes.active="{Binding IsSensors}" Tag="Sensors"
                   Command="{Binding NavigateCommand}" CommandParameter="sensors">
-            <StackPanel Orientation="Horizontal" Spacing="12">
+            <StackPanel Orientation="Horizontal" Spacing="14">
               <TextBlock Classes="icon" Text="&#xE9D2;" />
-              <TextBlock Text="Sensors" />
+              <TextBlock Classes="navlabel" Text="Sensors" />
             </StackPanel>
           </Button>
-          <Button Classes="nav" Classes.active="{Binding IsFans}"
+          <Button Classes="nav" Classes.active="{Binding IsFans}" Tag="Fans"
                   Command="{Binding NavigateCommand}" CommandParameter="fans">
-            <StackPanel Orientation="Horizontal" Spacing="12">
+            <StackPanel Orientation="Horizontal" Spacing="14">
               <TextBlock Classes="icon" Text="&#xE706;" />
-              <TextBlock Text="Fans" />
+              <TextBlock Classes="navlabel" Text="Fans" />
             </StackPanel>
           </Button>
-          <Button Classes="nav" Classes.active="{Binding IsStartup}"
+          <Button Classes="nav" Classes.active="{Binding IsStartup}" Tag="Startup apps"
                   Command="{Binding NavigateCommand}" CommandParameter="startup">
-            <StackPanel Orientation="Horizontal" Spacing="12">
+            <StackPanel Orientation="Horizontal" Spacing="14">
               <TextBlock Classes="icon" Text="&#xE768;" />
-              <TextBlock Text="Startup apps" />
+              <TextBlock Classes="navlabel" Text="Startup apps" />
             </StackPanel>
           </Button>
-          <Button Classes="nav" Classes.active="{Binding IsSettings}"
+
+          <Border Height="1" Background="{DynamicResource Stroke}" Margin="8,10" />
+
+          <Button Classes="nav" Classes.active="{Binding IsSettings}" Tag="Settings"
                   Command="{Binding NavigateCommand}" CommandParameter="settings">
-            <StackPanel Orientation="Horizontal" Spacing="12">
+            <StackPanel Orientation="Horizontal" Spacing="14">
               <TextBlock Classes="icon" Text="&#xE713;" />
-              <TextBlock Text="Settings" />
+              <TextBlock Classes="navlabel" Text="Settings" />
             </StackPanel>
           </Button>
         </StackPanel>
@@ -105,9 +145,9 @@
     </Border>
 
     <!-- Page -->
-    <TransitioningContentControl Grid.Column="1" Margin="32,48,32,28" Content="{Binding CurrentPage}">
+    <TransitioningContentControl Grid.Column="1" Margin="36,44,36,28" Content="{Binding CurrentPage}">
       <TransitioningContentControl.PageTransition>
-        <CrossFade Duration="0:0:0.15" />
+        <CrossFade Duration="0:0:0.12" />
       </TransitioningContentControl.PageTransition>
     </TransitioningContentControl>
   </Grid>

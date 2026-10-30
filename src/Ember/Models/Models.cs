@@ -55,6 +55,8 @@ public sealed class AppSettings
 
     /// <summary>Per-fan control settings (Auto / Fixed / Curve).</summary>
     public List<FanConfig> Fans { get; set; } = new();
+
+    public bool SidebarCollapsed { get; set; }
 }
 
 /// <summary>A color theme. Built-ins live in ThemeService; users can drop JSON files in %AppData%\Ember\themes.</summary>

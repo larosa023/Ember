@@ -9,29 +9,49 @@
        Header cells are separated by 9px ColumnResizer dividers; rows use Spacing="9" to line up. -->
 
   <DockPanel>
-    <StackPanel DockPanel.Dock="Top" Spacing="16" Margin="0,0,0,16">
-      <DockPanel>
-        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-          <Button Content="Open file location" Command="{Binding OpenLocationCommand}" />
-          <Button Content="End tree" Command="{Binding EndTreeCommand}" />
-          <Button Classes="accent" Content="End task" Command="{Binding EndTaskCommand}" />
-        </StackPanel>
-        <StackPanel Spacing="2">
-          <TextBlock Classes="h1" Text="Processes" />
-          <TextBlock Classes="label" Text="{Binding Summary}" />
-        </StackPanel>
-      </DockPanel>
-      <TextBox Watermark="Search by name or PID" Text="{Binding Search}" CornerRadius="10" />
+    <StackPanel DockPanel.Dock="Top" Classes="pageheader">
+      <TextBlock Classes="h1" Text="Processes" />
+      <TextBlock Classes="subtitle" Text="{Binding Summary}" />
     </StackPanel>
 
-    <TextBlock DockPanel.Dock="Bottom" Classes="label" Margin="4,10,0,0"
-               TextWrapping="Wrap" Text="{Binding Status}" />
+    <!-- Toolbar: search left, actions right -->
+    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+        <Button Classes="ghost" Command="{Binding OpenLocationCommand}" ToolTip.Tip="Open file location">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Classes="icon" FontSize="13" Text="&#xE838;" />
+            <TextBlock Text="Open location" />
+          </StackPanel>
+        </Button>
+        <Button Classes="ghost" Command="{Binding EndTreeCommand}" ToolTip.Tip="End this process and everything it started">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Classes="icon" FontSize="13" Text="&#xE8EC;" />
+            <TextBlock Text="End tree" />
+          </StackPanel>
+        </Button>
+        <Button Classes="accent" Margin="6,0,0,0" Command="{Binding EndTaskCommand}" ToolTip.Tip="End task (Delete)">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Classes="icon" FontSize="13" Text="&#xE711;" />
+            <TextBlock Text="End task" />
+          </StackPanel>
+        </Button>
+      </StackPanel>
+      <TextBox Classes="search" Width="320" HorizontalAlignment="Left"
+               Watermark="Search name or PID" Text="{Binding Search}">
+        <TextBox.InnerLeftContent>
+          <TextBlock Classes="icon" FontSize="13" Margin="10,0,2,0" Foreground="{DynamicResource TextMuted}" Text="&#xE721;" />
+        </TextBox.InnerLeftContent>
+      </TextBox>
+    </DockPanel>
+
+    <TextBlock DockPanel.Dock="Bottom" Classes="label" Margin="4,10,0,0" TextWrapping="Wrap" Text="{Binding Status}"
+               IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
     <Border Classes="card" Padding="0" ClipToBounds="True">
       <DockPanel>
 
         <!-- Header with draggable dividers -->
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Height="34" Margin="16,4,0,0">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Height="36" Margin="16,2,0,0">
           <Button Classes="header" HorizontalContentAlignment="Left" VerticalAlignment="Stretch"
                   Width="{ReflectionBinding NameWidth, Source={x:Static vm:ColumnLayout.Instance}}"
                   Content="{Binding NameHeader}" Command="{Binding SortCommand}" CommandParameter="name" />

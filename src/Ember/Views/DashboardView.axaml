@@ -8,20 +8,23 @@
   <ScrollViewer>
     <StackPanel Spacing="22">
 
-      <StackPanel Spacing="2">
+      <StackPanel Classes="pageheader" Margin="0">
         <TextBlock Classes="h1" Text="Dashboard" />
-        <TextBlock Classes="label" Text="{Binding UptimeText, StringFormat='{}{0} · click a card for details'}" />
+        <TextBlock Classes="subtitle" Text="{Binding UptimeText}" />
       </StackPanel>
 
       <Grid ColumnDefinitions="*,16,*,16,*">
 
         <!-- CPU -->
         <Button Grid.Column="0" Classes="tile" Command="{Binding OpenCommand}" CommandParameter="cpu"
-                ToolTip.Tip="Open details">
+                ToolTip.Tip="Details">
         <Border Classes="card">
           <StackPanel Spacing="18">
             <StackPanel Spacing="4">
-              <TextBlock Classes="eyebrow" Text="PROCESSOR" />
+              <DockPanel>
+                <TextBlock DockPanel.Dock="Right" Classes="icon open" FontSize="12" Text="&#xE76C;" />
+                <TextBlock Classes="eyebrow" Text="PROCESSOR" />
+              </DockPanel>
               <TextBlock Classes="h2" Text="{Binding CpuName}" TextTrimming="CharacterEllipsis" />
             </StackPanel>
 
@@ -55,11 +58,14 @@
 
         <!-- GPU -->
         <Button Grid.Column="2" Classes="tile" Command="{Binding OpenCommand}" CommandParameter="gpu"
-                ToolTip.Tip="Open details">
+                ToolTip.Tip="Details">
         <Border Classes="card">
           <StackPanel Spacing="18">
             <StackPanel Spacing="4">
-              <TextBlock Classes="eyebrow" Text="GRAPHICS" />
+              <DockPanel>
+                <TextBlock DockPanel.Dock="Right" Classes="icon open" FontSize="12" Text="&#xE76C;" />
+                <TextBlock Classes="eyebrow" Text="GRAPHICS" />
+              </DockPanel>
               <TextBlock Classes="h2" Text="{Binding GpuName}" TextTrimming="CharacterEllipsis" />
             </StackPanel>
 
@@ -93,11 +99,14 @@
 
         <!-- Memory -->
         <Button Grid.Column="4" Classes="tile" Command="{Binding OpenCommand}" CommandParameter="ram"
-                ToolTip.Tip="Open details">
+                ToolTip.Tip="Details">
         <Border Classes="card">
           <StackPanel Spacing="18">
             <StackPanel Spacing="4">
-              <TextBlock Classes="eyebrow" Text="MEMORY" />
+              <DockPanel>
+                <TextBlock DockPanel.Dock="Right" Classes="icon open" FontSize="12" Text="&#xE76C;" />
+                <TextBlock Classes="eyebrow" Text="MEMORY" />
+              </DockPanel>
               <TextBlock Classes="h2" Text="{Binding RamTotalText, StringFormat='{}{0} installed'}" />
             </StackPanel>
 

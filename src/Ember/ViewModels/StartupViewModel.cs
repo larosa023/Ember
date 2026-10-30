@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Avalonia.Media;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -59,15 +60,43 @@ public partial class StartupRow : ObservableObject
         Entry = entry;
         _toggle = toggle;
         IsEnabled = entry.Enabled;
+        Icon = LoadIcon(entry.Command);
         _suppress = false;
     }
 
     public StartupEntry Entry { get; }
+    public IImage? Icon { get; } 
     public string Name => Entry.Name;
     public string Command => Entry.Command;
     public string Location => Entry.Location;
 
     [ObservableProperty] private bool _isEnabled;
+
+    /// <summary>The icon of the exe a startup command launches (generic icon if it can't be read).</summary>
+    private static IImage? LoadIcon(string command)
+    {
+        try
+        {
+            var cmd = Environment.ExpandEnvironmentVariables(command.Trim());
+            string? path;
+            if (cmd.StartsWith('"'))
+            {
+                var end = cmd.IndexOf('"', 1);
+                path = end > 1 ? cmd[1..end] : null;
+            }
+            else
+            {
+                var exe = cmd.IndexOf(".exe", StringComparison.OrdinalIgnoreCase);
+                path = exe > 0 ? cmd[..(exe + 4)] : cmd;
+            }
+
+            if (path is not null && File.Exists(path) && Services.Native.ExtractIcon(path) is { } icon)
+                return icon;
+        }
+        catch { }
+
+        try { return Services.Native.GenericAppIcon(); } catch { return null; }
+    }
 
     partial void OnIsEnabledChanged(bool value)
     {

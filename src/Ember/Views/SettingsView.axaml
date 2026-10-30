@@ -5,118 +5,153 @@
              x:DataType="vm:SettingsViewModel">
 
   <ScrollViewer>
-    <StackPanel Spacing="16" MaxWidth="760" HorizontalAlignment="Left">
-      <StackPanel Spacing="2" Margin="0,0,0,6">
+    <StackPanel Spacing="8" MaxWidth="760" HorizontalAlignment="Left">
+      <StackPanel Classes="pageheader" Margin="0,0,0,12">
         <TextBlock Classes="h1" Text="Settings" />
-        <TextBlock Classes="label" Text="{Binding VersionText}" />
+        <TextBlock Classes="subtitle" Text="{Binding VersionText}" />
       </StackPanel>
 
       <!-- Appearance -->
-      <Border Classes="card">
-        <StackPanel Spacing="16">
-          <TextBlock Classes="eyebrow" Text="APPEARANCE" />
-          <DockPanel>
-            <ComboBox DockPanel.Dock="Right" MinWidth="200"
-                      ItemsSource="{Binding ThemeNames}" SelectedItem="{Binding SelectedTheme}" />
-            <StackPanel Spacing="2">
-              <TextBlock Text="Theme" FontWeight="SemiBold" />
-              <TextBlock Classes="label" Text="Switches instantly. Add your own as JSON in the themes folder." />
-            </StackPanel>
-          </DockPanel>
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button Content="Open themes folder" Command="{Binding OpenThemesFolderCommand}" />
-            <Button Content="Reload themes" Command="{Binding ReloadThemesCommand}" />
-          </StackPanel>
+      <TextBlock Classes="eyebrow" Text="APPEARANCE" Margin="4,0" />
+      <Border Classes="card" Padding="20,2">
+        <StackPanel>
+          <Border Classes="row">
+            <DockPanel>
+              <ComboBox DockPanel.Dock="Right" Width="220" VerticalAlignment="Center"
+                        ItemsSource="{Binding ThemeNames}" SelectedItem="{Binding SelectedTheme}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Theme" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="Switches instantly." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
+          <Border Classes="row">
+            <DockPanel>
+              <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                <Button Classes="ghost" Content="Open folder" Command="{Binding OpenThemesFolderCommand}" />
+                <Button Classes="ghost" Content="Reload" Command="{Binding ReloadThemesCommand}" />
+              </StackPanel>
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Custom themes" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="Drop a JSON theme file in the themes folder, then reload." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
         </StackPanel>
       </Border>
 
       <!-- Monitoring -->
-      <Border Classes="card">
-        <StackPanel Spacing="16">
-          <TextBlock Classes="eyebrow" Text="MONITORING" />
-          <DockPanel>
-            <ComboBox DockPanel.Dock="Right" MinWidth="200"
-                      ItemsSource="{Binding RefreshOptions}" SelectedItem="{Binding SelectedRefresh}" />
-            <StackPanel Spacing="2">
-              <TextBlock Text="Refresh rate" FontWeight="SemiBold" />
-              <TextBlock Classes="label" Text="Slower refresh uses even less CPU." />
-            </StackPanel>
-          </DockPanel>
-          <DockPanel>
-            <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding UseFahrenheit}" />
-            <StackPanel Spacing="2">
-              <TextBlock Text="Show temperatures in °F" FontWeight="SemiBold" />
-              <TextBlock Classes="label" Text="Celsius is the default." />
-            </StackPanel>
-          </DockPanel>
-          <DockPanel>
-            <ComboBox DockPanel.Dock="Right" MinWidth="200" MaxWidth="300"
-                      ItemsSource="{Binding GpuOptions}" SelectedItem="{Binding SelectedGpu}" />
-            <StackPanel Spacing="2">
-              <TextBlock Text="Graphics card" FontWeight="SemiBold" />
-              <TextBlock Classes="label" TextWrapping="Wrap"
-                         Text="Which GPU the dashboard shows if you have more than one." />
-            </StackPanel>
-          </DockPanel>
+      <TextBlock Classes="eyebrow" Text="MONITORING" Margin="4,16,4,0" />
+      <Border Classes="card" Padding="20,2">
+        <StackPanel>
+          <Border Classes="row">
+            <DockPanel>
+              <ComboBox DockPanel.Dock="Right" Width="220" VerticalAlignment="Center"
+                        ItemsSource="{Binding RefreshOptions}" SelectedItem="{Binding SelectedRefresh}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Refresh rate" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="Slower refresh uses even less CPU." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
+          <Border Classes="row">
+            <DockPanel>
+              <ComboBox DockPanel.Dock="Right" Width="220" VerticalAlignment="Center"
+                        ItemsSource="{Binding GpuOptions}" SelectedItem="{Binding SelectedGpu}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Graphics card" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="Which GPU the dashboard shows if you have more than one." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
+          <Border Classes="row">
+            <DockPanel>
+              <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding UseFahrenheit}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Temperatures in °F" FontWeight="SemiBold" />
+                <TextBlock Classes="label" Text="Celsius when off." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
         </StackPanel>
       </Border>
 
       <!-- Startup & tray -->
-      <Border Classes="card">
-        <StackPanel Spacing="16">
-          <TextBlock Classes="eyebrow" Text="STARTUP &amp; TRAY" />
-          <DockPanel>
-            <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding LaunchAtStartup}" />
-            <StackPanel Spacing="2">
-              <TextBlock Text="Start Ember when I sign in" FontWeight="SemiBold" />
-              <TextBlock Classes="label" Text="Opens quietly in the system tray." />
-            </StackPanel>
-          </DockPanel>
-          <DockPanel IsEnabled="{Binding LaunchAtStartup}">
-            <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding StartupAsAdmin}" />
-            <StackPanel Spacing="2">
-              <TextBlock Text="Start with admin rights" FontWeight="SemiBold" />
-              <TextBlock Classes="label" TextWrapping="Wrap"
-                         Text="Shows CPU temps from the start, with no UAC prompt. Turning this on needs Ember running as admin once." />
-            </StackPanel>
-          </DockPanel>
-          <DockPanel>
-            <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding MinimizeToTray}" />
-            <StackPanel Spacing="2">
-              <TextBlock Text="Minimize to tray" FontWeight="SemiBold" />
-              <TextBlock Classes="label" Text="Minimizing hides Ember from the taskbar. Click the tray icon to bring it back." />
-            </StackPanel>
-          </DockPanel>
-          <DockPanel>
-            <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding CloseToTray}" />
-            <StackPanel Spacing="2">
-              <TextBlock Text="Close button keeps Ember in the tray" FontWeight="SemiBold" />
-              <TextBlock Classes="label" Text="Quit for real from the tray icon's menu." />
-            </StackPanel>
-          </DockPanel>
-          <TextBlock Classes="label" TextWrapping="Wrap" Text="{Binding StartupStatus}"
-                     IsVisible="{Binding StartupStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+      <TextBlock Classes="eyebrow" Text="STARTUP &amp; TRAY" Margin="4,16,4,0" />
+      <Border Classes="card" Padding="20,2">
+        <StackPanel>
+          <Border Classes="row">
+            <DockPanel>
+              <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding LaunchAtStartup}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Start Ember when I sign in" FontWeight="SemiBold" />
+                <TextBlock Classes="label" Text="Opens quietly in the system tray." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
+          <Border Classes="row" IsEnabled="{Binding LaunchAtStartup}">
+            <DockPanel>
+              <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding StartupAsAdmin}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Start with admin rights" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap"
+                           Text="CPU temps and fan control from boot, with no UAC prompt. Needs Ember running as admin once to turn on." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
+          <Border Classes="row">
+            <DockPanel>
+              <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding MinimizeToTray}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Minimize to tray" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="Hides Ember from the taskbar. Click the tray icon to bring it back." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
+          <Border Classes="row">
+            <DockPanel>
+              <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding CloseToTray}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Close to tray" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="The close button keeps Ember running. Quit from the tray icon's menu." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
         </StackPanel>
       </Border>
+      <TextBlock Classes="label" TextWrapping="Wrap" Margin="4,2,4,0" Text="{Binding StartupStatus}"
+                 IsVisible="{Binding StartupStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
       <!-- Updates -->
-      <Border Classes="card">
-        <StackPanel Spacing="16">
-          <TextBlock Classes="eyebrow" Text="UPDATES" />
-          <DockPanel>
-            <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding AutoCheckUpdates}" />
-            <StackPanel Spacing="2">
-              <TextBlock Text="Check for updates on launch" FontWeight="SemiBold" />
-              <TextBlock Classes="label" Text="Downloads in the background. Nothing installs until you restart." />
+      <TextBlock Classes="eyebrow" Text="UPDATES" Margin="4,16,4,0" />
+      <Border Classes="card" Padding="20,2">
+        <StackPanel>
+          <Border Classes="row">
+            <DockPanel>
+              <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding AutoCheckUpdates}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Check for updates on launch" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="Downloads in the background. Nothing installs until you restart." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
+          <Border Classes="row">
+            <StackPanel Spacing="10">
+              <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                  <Button Classes="ghost" Content="Check now" Command="{Binding CheckForUpdatesCommand}" />
+                  <Button Classes="accent" Content="Restart and update" Command="{Binding InstallUpdateCommand}"
+                          IsVisible="{Binding UpdateReady}" />
+                </StackPanel>
+                <StackPanel Spacing="2" Margin="0,0,16,0">
+                  <TextBlock Text="{Binding VersionText}" FontWeight="SemiBold" />
+                  <TextBlock Classes="label" TextWrapping="Wrap" Text="{Binding UpdateStatus}"
+                             IsVisible="{Binding UpdateStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                </StackPanel>
+              </DockPanel>
+              <ProgressBar Value="{Binding UpdateProgress}" Maximum="100" MinWidth="0" IsVisible="{Binding IsDownloading}" />
             </StackPanel>
-          </DockPanel>
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button Content="Check now" Command="{Binding CheckForUpdatesCommand}" />
-            <Button Classes="accent" Content="Restart and update" Command="{Binding InstallUpdateCommand}"
-                    IsVisible="{Binding UpdateReady}" />
-          </StackPanel>
-          <ProgressBar Value="{Binding UpdateProgress}" Maximum="100" IsVisible="{Binding IsDownloading}" />
-          <TextBlock Classes="label" TextWrapping="Wrap" Text="{Binding UpdateStatus}" />
+          </Border>
         </StackPanel>
       </Border>
     </StackPanel>
