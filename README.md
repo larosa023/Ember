@@ -19,11 +19,14 @@ Ember shows your CPU, GPU and memory at a glance (usage, temperatures, clocks, p
 - **Dashboard**: animated ring gauges and 60-second history graphs for CPU, GPU and RAM, with temps, clocks, power and VRAM
 - **Detail pages**: click the CPU, GPU or Memory card for a 2-minute graph, key stats, per-core usage and every sensor for that part
 - **Storage & network**: every drive letter with free space; per-disk health, temperature, life remaining and activity; live download/upload per network adapter
-- **Processes**: Apps / Background / Windows sections like Task Manager, live CPU, GPU and memory (same numbers as Task Manager) with system totals in the header, search, sortable resizable columns, and a right-click menu (end task/tree, priority, efficiency mode, open location, properties, search online)
+- **Processes**: Apps / Background / Windows sections like Task Manager, live CPU, GPU, memory, disk and network (same numbers as Task Manager) with system totals in the header, a Status column (efficiency mode, suspended) and columns you can show or hide, search, sortable resizable columns, and a right-click menu (end task/tree, priority, efficiency mode, open location, properties, search online)
 - **History**: a reading every 5 seconds saved to daily CSV logs; charts for temperatures, usage, power and network over 10 minutes to 24 hours, with CSV export
 - **Temperature alerts**: a pop-up when the CPU or GPU stays above your limit, even while Ember is in the tray
 - **Services**: browse, start, stop, restart and change the startup type of Windows services
 - **Fans**: per-fan Auto (BIOS), fixed speed or a drag-to-edit curve linked to any temperature, with safety rails (minimum speed, 100% if the sensor drops out, fans handed back to BIOS when Ember exits)
+- **Mini overlay**: always-on-top CPU/GPU/RAM/network panel for games; drag it anywhere, lock it click-through, toggle from the sidebar, tray or a shortcut
+- **System**: your PC's specs (Windows, CPU, motherboard/BIOS, RAM sticks, GPU and driver, drives) with a one-click **Copy specs**
+- **Shortcuts**: system-wide hotkeys for Ember and the overlay, remappable in Settings
 - **Sensors**: every sensor your hardware exposes (temps, fans, voltages, clocks, loads, power) with min and max
 - **Startup apps**: enable or disable apps that launch with Windows, same as Task Manager
 - **Themes and units**: five built-in themes that switch instantly (plus your own as JSON files); choose °C/°F, MB or GB for memory, Mbps or MB/s for network, and more
@@ -107,9 +110,9 @@ src/Ember/
 ## Roadmap
 
 - [x] Tray icon with live temps tooltip
-- [ ] Compact always-on-top overlay
+- [x] Compact always-on-top overlay
 - [x] Per-process GPU usage
-- [ ] Per-process disk usage
+- [x] Per-process disk and network usage
 - [x] Fan curves
 - [ ] GPU tuning (power limit, clocks)
 - [x] Temperature alerts

@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Ember.ViewModels"
+             xmlns:s="using:Ember.Services"
+             x:Class="Ember.Views.SpecsView"
+             x:DataType="vm:SpecsViewModel">
+
+  <DockPanel>
+    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,20">
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+        <Button Classes="ghost" Command="{Binding RefreshCommand}">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Classes="icon" FontSize="13" Text="&#xE72C;" />
+            <TextBlock Text="Refresh" />
+          </StackPanel>
+        </Button>
+        <Button Classes="accent" Command="{Binding CopyCommand}">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Classes="icon" FontSize="13" Text="&#xE8C8;" />
+            <TextBlock Text="Copy specs" />
+          </StackPanel>
+        </Button>
+      </StackPanel>
+      <StackPanel>
+        <TextBlock Classes="h1" Text="System" />
+        <TextBlock Classes="subtitle" Text="Your PC's hardware and Windows details" />
+      </StackPanel>
+    </DockPanel>
+
+    <TextBlock DockPanel.Dock="Bottom" Classes="label" Margin="4,10,0,0" TextWrapping="Wrap" Text="{Binding Status}"
+               IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+    <ScrollViewer>
+      <StackPanel Spacing="12">
+        <Border Classes="card" IsVisible="{Binding IsLoading}">
+          <TextBlock Classes="label" Text="Reading system information…" />
+        </Border>
+
+        <ItemsControl ItemsSource="{Binding Sections}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel ItemSpacing="12" LineSpacing="12" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="s:SpecSection">
+              <Border Classes="card" Width="420" Padding="20,16">
+                <StackPanel Spacing="8">
+                  <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,0,0,4">
+                    <TextBlock Classes="icon" FontSize="15" Foreground="{DynamicResource Accent}" Text="{Binding Icon}" />
+                    <TextBlock Classes="h2" Text="{Binding Title}" />
+                  </StackPanel>
+                  <ItemsControl ItemsSource="{Binding Rows}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="s:SpecRow">
+                        <Grid ColumnDefinitions="120,*" Margin="0,3">
+                          <TextBlock Grid.Column="0" Classes="label" FontSize="13" Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                          <SelectableTextBlock Grid.Column="1" FontSize="13" Text="{Binding Value}" TextWrapping="Wrap" />
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </ScrollViewer>
+  </DockPanel>
+</UserControl>
