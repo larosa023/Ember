@@ -82,6 +82,25 @@ public sealed class AppSettings
 
     public bool SidebarCollapsed { get; set; }
 
+    // Mini overlay
+    public bool OverlayVisible { get; set; }
+    public bool OverlayLocked { get; set; }
+    public double OverlayOpacity { get; set; } = 0.85;
+    public double? OverlayX { get; set; }
+    public double? OverlayY { get; set; }
+    public bool OverlayShowCpu { get; set; } = true;
+    public bool OverlayShowGpu { get; set; } = true;
+    public bool OverlayShowRam { get; set; } = true;
+    public bool OverlayShowNet { get; set; }
+
+    /// <summary>Global shortcuts: action → "Ctrl+Alt+E". Empty string = off.</summary>
+    public Dictionary<string, string> Hotkeys { get; set; } = new()
+    {
+        ["toggle-ember"] = "Ctrl+Alt+E",
+        ["toggle-overlay"] = "Ctrl+Alt+O",
+        ["lock-overlay"] = "Ctrl+Alt+L",
+    };
+
     /// <summary>Version that last ran; used to do one-time work after an update.</summary>
     public string LastRunVersion { get; set; } = "";
 

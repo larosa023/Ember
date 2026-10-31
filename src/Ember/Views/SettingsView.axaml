@@ -114,6 +114,79 @@
         </StackPanel>
       </Border>
 
+      <!-- Overlay -->
+      <TextBlock Classes="eyebrow" Text="OVERLAY" Margin="4,16,4,0" />
+      <Border Classes="card" Padding="20,2">
+        <StackPanel>
+          <Border Classes="row">
+            <DockPanel>
+              <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding Overlay.IsOpen}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Show overlay" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="A small always-on-top panel with live stats. Drag it anywhere. Works over borderless and windowed games." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
+          <Border Classes="row">
+            <DockPanel>
+              <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding Overlay.IsLocked}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Lock in place" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="Clicks pass straight through it, so it never gets in the way. Use the shortcut to unlock." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
+          <Border Classes="row">
+            <DockPanel>
+              <TextBlock DockPanel.Dock="Right" Classes="stat" Width="52" TextAlignment="Right" VerticalAlignment="Center"
+                         Text="{Binding Overlay.OpacityText}" />
+              <Slider DockPanel.Dock="Right" Width="220" Minimum="0.3" Maximum="1" TickFrequency="0.05"
+                      IsSnapToTickEnabled="True" Value="{Binding Overlay.Opacity}" VerticalAlignment="Center" />
+              <TextBlock Text="Opacity" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </DockPanel>
+          </Border>
+          <Border Classes="row">
+            <DockPanel>
+              <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+                <CheckBox Content="CPU" IsChecked="{Binding Overlay.ShowCpu}" />
+                <CheckBox Content="GPU" IsChecked="{Binding Overlay.ShowGpu}" />
+                <CheckBox Content="RAM" IsChecked="{Binding Overlay.ShowRam}" />
+                <CheckBox Content="Network" IsChecked="{Binding Overlay.ShowNet}" />
+              </StackPanel>
+              <TextBlock Text="Show" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </DockPanel>
+          </Border>
+        </StackPanel>
+      </Border>
+
+      <!-- Shortcuts -->
+      <DockPanel Margin="4,16,4,0">
+        <Button DockPanel.Dock="Right" Classes="ghost" Padding="6,2" Content="Reset to defaults" Command="{Binding ResetHotkeysCommand}" />
+        <TextBlock Classes="eyebrow" Text="SHORTCUTS" VerticalAlignment="Bottom" />
+      </DockPanel>
+      <Border Classes="card" Padding="20,2">
+        <ItemsControl ItemsSource="{Binding Hotkeys}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:HotkeyRow">
+              <Border Classes="row">
+                <DockPanel>
+                  <Button DockPanel.Dock="Right" Classes="keycap" Classes.capturing="{Binding IsCapturing}" MinWidth="180"
+                          Content="{Binding Display}"
+                          Command="{Binding StartCommand}" ToolTip.Tip="Click, then press the new shortcut. Backspace clears it." />
+                  <StackPanel Spacing="2" Margin="0,0,16,0" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Label}" FontWeight="SemiBold" />
+                    <TextBlock Classes="label" Foreground="{DynamicResource Hot}" TextWrapping="Wrap"
+                               Text="Another app already uses this shortcut. Pick a different one." IsVisible="{Binding InUse}" />
+                    <TextBlock Classes="label" TextWrapping="Wrap" Text="{Binding Message}"
+                               IsVisible="{Binding Message, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                  </StackPanel>
+                </DockPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </Border>
+
       <!-- Alerts -->
       <TextBlock Classes="eyebrow" Text="ALERTS" Margin="4,16,4,0" />
       <Border Classes="card" Padding="20,2">

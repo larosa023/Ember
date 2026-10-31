@@ -276,6 +276,36 @@
     <Setter Property="Foreground" Value="{DynamicResource Text}" />
   </Style>
 
+  <!-- Shortcut "keycap" buttons in Settings -->
+  <Style Selector="Button.keycap">
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="12,6" />
+  </Style>
+  <Style Selector="Button.keycap.capturing">
+    <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
+    <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+  <!-- Mini overlay -->
+  <Style Selector="TextBlock.ovl-label">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="LetterSpacing" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="0,2" />
+  </Style>
+  <Style Selector="TextBlock.ovl-value">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="0,2" />
+  </Style>
+
   <!-- Process status icons -->
   <Style Selector="TextBlock.status-eco">
     <Setter Property="Foreground" Value="{DynamicResource Good}" />

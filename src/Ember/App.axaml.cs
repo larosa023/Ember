@@ -19,6 +19,9 @@ public partial class App : Application
     private MainWindowViewModel? _vm;
     private MainWindow? _window;
     private TrayIcon? _tray;
+    private OverlayController? _overlay;
+    private HotkeyService? _hotkeys;
+    private NativeMenuItem? _overlayMenuItem;
     private WindowState _restoreState = WindowState.Normal;
     private bool _quitting;
 
@@ -60,9 +63,15 @@ public partial class App : Application
             };
 
             var alerts = new AlertService(_settings, ShowWindow);
-            _vm = new MainWindowViewModel(_host, _settings, themes, new UpdateService(), alerts, history);
+            _overlay = new OverlayController(_settings, ShowWindow);
+            _hotkeys = new HotkeyService();
+            _vm = new MainWindowViewModel(_host, _settings, themes, new UpdateService(), alerts, history, _overlay, _hotkeys);
             _host.Tick += UpdateTrayTooltip;
             _host.Tick += (snapshot, _) => alerts.Check(snapshot);
+            _host.Tick += (snapshot, _) => _overlay.Update(snapshot);
+
+            _hotkeys.Pressed += OnHotkey;
+            if (!Program.SmokeTest) _hotkeys.Apply(_settings.Current.Hotkeys);
 
             CreateTray();
 
@@ -76,6 +85,8 @@ public partial class App : Application
             {
                 _host.Dispose();
                 history.Dispose();
+                _hotkeys?.Dispose();
+                _overlay?.Close();
                 _tray?.Dispose();
             };
 
@@ -89,6 +100,8 @@ public partial class App : Application
                 _ = Task.Run(Native.RefreshIconCache);
             }
             AutoStart.RefreshPath();
+
+            if (!Program.SmokeTest) _overlay.RestoreOnStartup();
 
             _host.Start();
 
@@ -190,13 +203,25 @@ public partial class App : Application
     {
         var open = new NativeMenuItem("Open Ember");
         open.Click += (_, _) => ShowWindow();
+        _overlayMenuItem = new NativeMenuItem("Show overlay") { ToggleType = NativeMenuItemToggleType.CheckBox };
+        _overlayMenuItem.Click += (_, _) => _overlay?.Toggle();
         var quit = new NativeMenuItem("Quit Ember");
         quit.Click += (_, _) => Quit();
 
         var menu = new NativeMenu();
         menu.Items.Add(open);
+        menu.Items.Add(_overlayMenuItem);
         menu.Items.Add(new NativeMenuItemSeparator());
         menu.Items.Add(quit);
+
+        if (_overlay is not null)
+        {
+            _overlay.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(OverlayController.IsOpen) && _overlayMenuItem is not null)
+                    _overlayMenuItem.IsChecked = _overlay.IsOpen;
+            };
+        }
 
         _tray = new TrayIcon
         {
@@ -208,6 +233,23 @@ public partial class App : Application
         _tray.Clicked += (_, _) => ShowWindow();
 
         TrayIcon.SetIcons(this, new TrayIcons { _tray });
+    }
+
+    private void OnHotkey(string action)
+    {
+        switch (action)
+        {
+            case "toggle-ember":
+                if (_window is { IsVisible: true, IsActive: true }) _window.Hide();
+                else ShowWindow();
+                break;
+            case "toggle-overlay":
+                _overlay?.Toggle();
+                break;
+            case "lock-overlay":
+                _overlay?.ToggleLock();
+                break;
+        }
     }
 
     private void UpdateTrayTooltip(HardwareSnapshot s, IReadOnlyList<ProcessInfo>? _)

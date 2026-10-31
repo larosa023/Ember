@@ -1,0 +1,38 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Ember.ViewModels"
+        x:Class="Ember.Views.OverlayWindow"
+        x:DataType="vm:OverlayController"
+        Title="Ember overlay"
+        SizeToContent="WidthAndHeight"
+        SystemDecorations="None" CanResize="False"
+        ShowInTaskbar="False" ShowActivated="False" Topmost="True"
+        Background="Transparent" TransparencyLevelHint="Transparent">
+
+  <Border x:Name="Card" CornerRadius="12" Padding="14,10" Margin="1"
+          Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Stroke}" BorderThickness="1"
+          Opacity="{Binding Opacity}" Cursor="SizeAll">
+    <Border.ContextMenu>
+      <ContextMenu>
+        <MenuItem Header="Lock in place (clicks pass through)" Command="{Binding ToggleLockCommand}" />
+        <MenuItem Header="Open Ember" Command="{Binding OpenEmberCommand}" />
+        <Separator />
+        <MenuItem Header="Hide overlay" Command="{Binding ToggleCommand}" />
+      </ContextMenu>
+    </Border.ContextMenu>
+
+    <Grid ColumnDefinitions="Auto,14,Auto" RowDefinitions="Auto,Auto,Auto,Auto">
+      <TextBlock Grid.Row="0" Classes="ovl-label" Text="CPU" IsVisible="{Binding ShowCpu}" />
+      <TextBlock Grid.Row="0" Grid.Column="2" Classes="ovl-value" Text="{Binding CpuText}" IsVisible="{Binding ShowCpu}" />
+
+      <TextBlock Grid.Row="1" Classes="ovl-label" Text="GPU" IsVisible="{Binding ShowGpu}" />
+      <TextBlock Grid.Row="1" Grid.Column="2" Classes="ovl-value" Text="{Binding GpuText}" IsVisible="{Binding ShowGpu}" />
+
+      <TextBlock Grid.Row="2" Classes="ovl-label" Text="RAM" IsVisible="{Binding ShowRam}" />
+      <TextBlock Grid.Row="2" Grid.Column="2" Classes="ovl-value" Text="{Binding RamText}" IsVisible="{Binding ShowRam}" />
+
+      <TextBlock Grid.Row="3" Classes="ovl-label" Text="NET" IsVisible="{Binding ShowNet}" />
+      <TextBlock Grid.Row="3" Grid.Column="2" Classes="ovl-value" Text="{Binding NetText}" IsVisible="{Binding ShowNet}" />
+    </Grid>
+  </Border>
+</Window>

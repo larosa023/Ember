@@ -148,6 +148,14 @@
 
           <Border Height="1" Background="{DynamicResource Stroke}" Margin="8,10" />
 
+          <Button Classes="nav" Classes.active="{Binding Overlay.IsOpen}" Tag="Overlay (show or hide)"
+                  Command="{Binding Overlay.ToggleCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="14">
+              <TextBlock Classes="icon" Text="&#xE7F4;" />
+              <TextBlock Classes="navlabel" Text="Overlay" />
+            </StackPanel>
+          </Button>
+
           <Button Classes="nav" Classes.active="{Binding IsSettings}" Tag="Settings"
                   Command="{Binding NavigateCommand}" CommandParameter="settings">
             <StackPanel Orientation="Horizontal" Spacing="14">

@@ -18,14 +18,15 @@ public partial class MainWindowViewModel : ViewModelBase
     private ViewModelBase _currentPage;
 
     public MainWindowViewModel(MonitorHost host, SettingsService settings, ThemeService themes, UpdateService updates,
-        AlertService alerts, HistoryService history)
+        AlertService alerts, HistoryService history, OverlayController overlay, HotkeyService hotkeys)
     {
+        Overlay = overlay;
         History = new HistoryViewModel(history);
         Processes.SetMemoryUnitRequested = key => Settings!.SetMemoryUnit(key);
         _host = host;
         _settings = settings;
         _isSidebarCollapsed = settings.Current.SidebarCollapsed;
-        Settings = new SettingsViewModel(settings, themes, updates, host, alerts);
+        Settings = new SettingsViewModel(settings, themes, updates, host, alerts, overlay, hotkeys);
         Fans = new FansViewModel(settings, host);
         CpuDetail = new DetailViewModel(DetailKind.Cpu, () => CurrentPage = Dashboard);
         GpuDetail = new DetailViewModel(DetailKind.Gpu, () => CurrentPage = Dashboard);
@@ -51,6 +52,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public SettingsViewModel Settings { get; }
     public FansViewModel Fans { get; }
     public HistoryViewModel History { get; }
+    public OverlayController Overlay { get; }
     public ServicesViewModel Services { get; } = new();
     public DetailViewModel CpuDetail { get; }
     public DetailViewModel GpuDetail { get; }
@@ -149,7 +151,10 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <summary>Visits every page once; used by the release build's smoke test.</summary>
     public IEnumerable<Action> SmokeTestSteps()
     {
-        foreach (var page in new[] { "processes", "sensors", "history", "fans", "services", "startup", "settings", "dashboard" })
+        // Stay on Processes a few seconds so the per-app disk/network/status sampling runs.
+        yield return () => Navigate("processes");
+        for (int i = 0; i < 5; i++) yield return () => { };
+        foreach (var page in new[] { "sensors", "history", "fans", "services", "startup", "settings", "dashboard" })
             yield return () => Navigate(page);
         yield return () => CurrentPage = CpuDetail;
         yield return () => CurrentPage = GpuDetail;
@@ -159,6 +164,10 @@ public partial class MainWindowViewModel : ViewModelBase
         yield return () => IsSidebarCollapsed = !IsSidebarCollapsed;
         yield return () => IsSidebarCollapsed = !IsSidebarCollapsed;
         yield return () => Settings.SendTestAlertCommand.Execute(null);
+        yield return () => Overlay.Toggle();   // open the overlay window
+        yield return () => Overlay.ToggleLock();
+        yield return () => Overlay.ToggleLock();
+        yield return () => Overlay.Toggle();   // and close it
         yield return () => Navigate("dashboard");
     }
 

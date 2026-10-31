@@ -36,10 +36,20 @@ public partial class SettingsViewModel : ViewModelBase
     private bool _taskExists;
 
     private readonly AlertService _alerts;
+    private readonly HotkeyService _hotkeys;
 
-    public SettingsViewModel(SettingsService settings, ThemeService themes, UpdateService updates, MonitorHost host, AlertService alerts)
+    public SettingsViewModel(SettingsService settings, ThemeService themes, UpdateService updates, MonitorHost host,
+        AlertService alerts, OverlayController overlay, HotkeyService hotkeys)
     {
         _alerts = alerts;
+        Overlay = overlay;
+        _hotkeys = hotkeys;
+        foreach (var (action, label) in HotkeyActions)
+            Hotkeys.Add(new HotkeyRow(action, label, settings.Current.Hotkeys.GetValueOrDefault(action) ?? "", StartCapture));
+        hotkeys.Applied += failed =>
+        {
+            foreach (var row in Hotkeys) row.InUse = failed.Contains(row.Action);
+        };
         _settings = settings;
         _alertsEnabled = settings.Current.AlertsEnabled;
         _cpuAlert = settings.Current.CpuAlertC;
@@ -147,6 +157,111 @@ public partial class SettingsViewModel : ViewModelBase
         _settings.Save();
         OnPropertyChanged(nameof(CpuAlertText));
         OnPropertyChanged(nameof(GpuAlertText));
+    }
+
+    // ---------- Overlay ----------
+
+    public OverlayController Overlay { get; }
+
+    // ---------- Shortcuts ----------
+
+    private static readonly (string Action, string Label)[] HotkeyActions =
+    [
+        ("toggle-ember", "Show or hide Ember"),
+        ("toggle-overlay", "Show or hide the overlay"),
+        ("lock-overlay", "Lock or unlock the overlay"),
+    ];
+
+    public System.Collections.ObjectModel.ObservableCollection<HotkeyRow> Hotkeys { get; } = new();
+
+    /// <summary>The row waiting for a key press, or null.</summary>
+    [ObservableProperty] private HotkeyRow? _capturing;
+
+    private void StartCapture(HotkeyRow row)
+    {
+        if (Capturing is not null) Capturing.IsCapturing = false;
+        Capturing = row;
+        row.IsCapturing = true;
+        row.Message = "";
+    }
+
+    /// <summary>Called by the Settings page for each key press while capturing. Returns true if handled.</summary>
+    public bool CaptureKey(Avalonia.Input.Key key, Avalonia.Input.KeyModifiers mods)
+    {
+        if (Capturing is not { } row) return false;
+
+        // Modifier keys on their own: keep waiting for the real key.
+        if (key is Avalonia.Input.Key.LeftCtrl or Avalonia.Input.Key.RightCtrl or Avalonia.Input.Key.LeftAlt
+            or Avalonia.Input.Key.RightAlt or Avalonia.Input.Key.LeftShift or Avalonia.Input.Key.RightShift
+            or Avalonia.Input.Key.LWin or Avalonia.Input.Key.RWin)
+            return true;
+
+        if (key == Avalonia.Input.Key.Escape && mods == Avalonia.Input.KeyModifiers.None)
+        {
+            EndCapture(row);
+            return true;
+        }
+
+        if (key is Avalonia.Input.Key.Back or Avalonia.Input.Key.Delete && mods == Avalonia.Input.KeyModifiers.None)
+        {
+            EndCapture(row);
+            SaveHotkey(row, "");
+            return true;
+        }
+
+        var text = Hotkey.FromKeyEvent(key, mods);
+        if (text is null)
+        {
+            row.Message = "That key can't be used. Try a letter, number or F-key.";
+            return true;
+        }
+
+        var isFunctionKey = key is >= Avalonia.Input.Key.F1 and <= Avalonia.Input.Key.F24;
+        if (mods == Avalonia.Input.KeyModifiers.None && !isFunctionKey)
+        {
+            row.Message = "Add Ctrl, Alt, Shift or Win so it doesn't block normal typing.";
+            return true;
+        }
+
+        var clash = Hotkeys.FirstOrDefault(r => r != row && string.Equals(r.Combo, text, StringComparison.OrdinalIgnoreCase));
+        if (clash is not null)
+        {
+            row.Message = $"Already used for \"{clash.Label}\".";
+            return true;
+        }
+
+        EndCapture(row);
+        SaveHotkey(row, text);
+        return true;
+    }
+
+    private void EndCapture(HotkeyRow row)
+    {
+        row.IsCapturing = false;
+        Capturing = null;
+    }
+
+    private void SaveHotkey(HotkeyRow row, string combo)
+    {
+        row.Combo = combo;
+        row.Message = "";
+        _settings.Current.Hotkeys[row.Action] = combo;
+        _settings.Save();
+        _hotkeys.Apply(_settings.Current.Hotkeys);
+    }
+
+    [RelayCommand]
+    private void ResetHotkeys()
+    {
+        var defaults = new Models.AppSettings().Hotkeys;
+        foreach (var row in Hotkeys)
+        {
+            row.Combo = defaults.GetValueOrDefault(row.Action) ?? "";
+            row.Message = "";
+            _settings.Current.Hotkeys[row.Action] = row.Combo;
+        }
+        _settings.Save();
+        _hotkeys.Apply(_settings.Current.Hotkeys);
     }
 
     // ---------- Units ----------
@@ -469,4 +584,37 @@ public partial class SettingsViewModel : ViewModelBase
     {
         if (_pending is not null) _updates.ApplyAndRestart(_pending);
     }
+}
+
+public partial class HotkeyRow : ObservableObject
+{
+    private readonly System.Action<HotkeyRow> _onStart;
+
+    public HotkeyRow(string action, string label, string combo, System.Action<HotkeyRow> onStart)
+    {
+        Action = action;
+        Label = label;
+        _combo = combo;
+        _onStart = onStart;
+    }
+
+    [RelayCommand]
+    private void Start() => _onStart(this);
+
+    public string Action { get; }
+    public string Label { get; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Display))]
+    private string _combo;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Display))]
+    private bool _isCapturing;
+
+    [ObservableProperty] private bool _inUse;
+    [ObservableProperty] private string _message = "";
+
+    public string Display => IsCapturing ? "Press keys… (Esc cancels)"
+        : string.IsNullOrEmpty(Combo) ? "Not set" : Combo.Replace("+", " + ");
 }
