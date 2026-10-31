@@ -8,7 +8,7 @@ namespace Ember.Services;
 /// Samples running processes: per-process CPU %, memory, exe path, friendly name, icon (cached),
 /// and whether the process owns a visible window (so the UI can split Apps from background work).
 /// </summary>
-public sealed class ProcessService
+public sealed class ProcessService : IDisposable
 {
     private static readonly string WindowsDir =
         Environment.GetFolderPath(Environment.SpecialFolder.Windows).TrimEnd('\\') + "\\";
@@ -20,7 +20,15 @@ public sealed class ProcessService
     private readonly Dictionary<int, Meta> _meta = new();
     private readonly Dictionary<string, (IImage? Icon, string? Description)> _byPath = new(StringComparer.OrdinalIgnoreCase);
     private readonly GpuProcessCounter _gpu = new();
-    private readonly PrivateWorkingSetCounter _privateMemory = new();
+    private readonly ProcessCounters _counters = new();
+    private readonly NetworkMonitor _network = new();
+
+    /// <summary>Set by the UI: only pay for these when their column is visible.</summary>
+    public static volatile bool WantNetwork = true;
+    public static volatile bool WantStatus = true;
+
+    /// <summary>True when per-process network numbers are available (needs admin).</summary>
+    public bool NetworkAvailable => _network.IsRunning;
     private IImage? _genericIcon;
     private bool _genericLoaded;
 
@@ -29,6 +37,7 @@ public sealed class ProcessService
     /// <summary>Forget the previous CPU sample (used when the Processes page is hidden).</summary>
     public void Reset()
     {
+        _network.Stop();   // stop tracing while the Processes page is closed
         if (_lastTimestamp == 0) return;
         _lastCpu = new Dictionary<int, TimeSpan>();
         _lastTimestamp = 0;
@@ -42,8 +51,17 @@ public sealed class ProcessService
 
         Dictionary<int, double> gpuByPid;
         Dictionary<int, long> privateByPid;
-        try { privateByPid = _privateMemory.Read(); }
-        catch { privateByPid = new Dictionary<int, long>(); }
+        Dictionary<int, double> diskByPid;
+        try { (privateByPid, diskByPid) = _counters.Read(); }
+        catch { (privateByPid, diskByPid) = (new Dictionary<int, long>(), new Dictionary<int, double>()); }
+
+        if (WantNetwork) _network.EnsureStarted(); else _network.Stop();
+        var netBytes = _network.IsRunning ? _network.Drain() : null;
+        var seconds = elapsedMs > 0 ? elapsedMs / 1000 : 1;
+
+        HashSet<int> suspended;
+        try { suspended = WantStatus ? SuspendedProcesses.Find() : new HashSet<int>(); }
+        catch { suspended = new HashSet<int>(); }
 
         try { gpuByPid = _gpu.Read(); }
         catch { gpuByPid = new Dictionary<int, double>(); }
@@ -91,7 +109,12 @@ public sealed class ProcessService
                 catch { /* protected process: no access without admin */ }
 
                 var meta = GetMeta(pid, name);
+                var net = netBytes is null ? double.NaN
+                    : netBytes.TryGetValue(pid, out var b) ? (b.Sent + b.Received) / seconds : 0;
+                var efficient = WantStatus && Native.IsEfficiencyMode(pid) == true;
+
                 result.Add(new ProcessInfo(pid, name, Math.Clamp(cpu, 0, 100), memory, gpuByPid.GetValueOrDefault(pid),
+                    diskByPid.GetValueOrDefault(pid), net, efficient, suspended.Contains(pid),
                     meta.Path, meta.Icon, meta.Description, withWindows.Contains(pid), meta.IsWindows));
             }
         }
@@ -102,6 +125,12 @@ public sealed class ProcessService
         _lastCpu = cpuTimes;
         _lastTimestamp = now;
         return result;
+    }
+
+    public void Dispose()
+    {
+        _network.Dispose();
+        _counters.Dispose();
     }
 
     private Meta GetMeta(int pid, string name)

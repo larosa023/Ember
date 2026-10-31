@@ -139,7 +139,11 @@ public partial class MainWindowViewModel : ViewModelBase
         Sensors.Update(snapshot.Sensors);
         Settings.UpdateGpuList(snapshot.GpuNames);
         Processes.UpdateTotals(snapshot);
-        if (processes is not null) Processes.Update(processes);
+        if (processes is not null)
+        {
+            Processes.SetNetworkAvailable(_host.ProcessNetworkAvailable);
+            Processes.Update(processes);
+        }
     }
 
     /// <summary>Visits every page once; used by the release build's smoke test.</summary>

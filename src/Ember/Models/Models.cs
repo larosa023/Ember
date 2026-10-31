@@ -51,6 +51,7 @@ public sealed record NetAdapterInfo(
 
 public sealed record ProcessInfo(
     int Pid, string Name, double Cpu, long Memory, double Gpu,
+    double Disk, double Net, bool IsEfficient, bool IsSuspended,
     string? Path, IImage? Icon, string? Description,
     bool HasWindow, bool IsWindows);
 
@@ -72,6 +73,9 @@ public sealed class AppSettings
 
     /// <summary>Process list column widths (name, pid, cpu, mem), set by dragging the header dividers.</summary>
     public Dictionary<string, double> ProcessColumns { get; set; } = new();
+
+    /// <summary>Process list columns hidden from the header's right-click menu.</summary>
+    public List<string> HiddenColumns { get; set; } = new();
 
     /// <summary>Per-fan control settings (Auto / Fixed / Curve).</summary>
     public List<FanConfig> Fans { get; set; } = new();

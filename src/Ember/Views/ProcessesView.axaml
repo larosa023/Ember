@@ -50,57 +50,34 @@
     <Border Classes="card" Padding="0" ClipToBounds="True">
       <DockPanel>
 
-        <!-- Header with draggable dividers -->
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Height="54" Margin="16,2,0,0">
-          <Button Classes="header" HorizontalContentAlignment="Left" VerticalAlignment="Stretch" VerticalContentAlignment="Bottom" Padding="0,0,0,8"
-                  Width="{ReflectionBinding NameWidth, Source={x:Static vm:ColumnLayout.Instance}}"
-                  Content="{Binding NameHeader}" Command="{Binding SortCommand}" CommandParameter="name" />
-          <c:ColumnResizer Column="name">
-            <Border Classes="divider" />
-          </c:ColumnResizer>
-
-          <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch"
-                  Width="{ReflectionBinding PidWidth, Source={x:Static vm:ColumnLayout.Instance}}"
-                  Content="{Binding PidHeader}" Command="{Binding SortCommand}" CommandParameter="pid"
-                  VerticalContentAlignment="Bottom" Padding="0,0,0,8" />
-          <c:ColumnResizer Column="pid">
-            <Border Classes="divider" />
-          </c:ColumnResizer>
-
-          <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch"
-                  Width="{ReflectionBinding CpuWidth, Source={x:Static vm:ColumnLayout.Instance}}"
-                  Command="{Binding SortCommand}" CommandParameter="cpu" VerticalContentAlignment="Bottom" Padding="0,0,0,8">
-            <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom" Spacing="0">
-              <TextBlock Classes="coltotal" HorizontalAlignment="Right" Text="{Binding TotalCpuText}" />
-              <TextBlock HorizontalAlignment="Right" Text="{Binding CpuHeader}" />
-            </StackPanel>
-          </Button>
-          <c:ColumnResizer Column="cpu">
-            <Border Classes="divider" />
-          </c:ColumnResizer>
-
-          <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch"
-                  Width="{ReflectionBinding GpuWidth, Source={x:Static vm:ColumnLayout.Instance}}"
-                  Command="{Binding SortCommand}" CommandParameter="gpu" VerticalContentAlignment="Bottom" Padding="0,0,0,8">
-            <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom" Spacing="0">
-              <TextBlock Classes="coltotal" HorizontalAlignment="Right" Text="{Binding TotalGpuText}" />
-              <TextBlock HorizontalAlignment="Right" Text="{Binding GpuHeader}" />
-            </StackPanel>
-          </Button>
-          <c:ColumnResizer Column="gpu">
-            <Border Classes="divider" />
-          </c:ColumnResizer>
-
-          <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch"
-                  Width="{ReflectionBinding MemWidth, Source={x:Static vm:ColumnLayout.Instance}}"
-                  Command="{Binding SortCommand}" CommandParameter="mem" VerticalContentAlignment="Bottom" Padding="0,0,0,8"
-                  ToolTip.Tip="Click to sort · right-click for units">
-            <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom" Spacing="0">
-              <TextBlock Classes="coltotal" HorizontalAlignment="Right" Text="{Binding TotalMemText}" />
-              <TextBlock HorizontalAlignment="Right" Text="{Binding MemoryHeader}" />
-            </StackPanel>
-            <Button.ContextMenu>
-              <ContextMenu>
+        <!-- Header: system totals above column names, draggable dividers, right-click for columns -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Height="54" Margin="16,2,0,0" Background="Transparent">
+          <StackPanel.ContextMenu>
+            <ContextMenu>
+              <MenuItem Header="Columns" IsEnabled="False" />
+              <MenuItem Header="Status" Command="{ReflectionBinding ToggleColumnCommand, Source={x:Static vm:ColumnLayout.Instance}}" CommandParameter="status">
+                <MenuItem.Icon><TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{ReflectionBinding ShowStatus, Source={x:Static vm:ColumnLayout.Instance}}" /></MenuItem.Icon>
+              </MenuItem>
+              <MenuItem Header="PID" Command="{ReflectionBinding ToggleColumnCommand, Source={x:Static vm:ColumnLayout.Instance}}" CommandParameter="pid">
+                <MenuItem.Icon><TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{ReflectionBinding ShowPid, Source={x:Static vm:ColumnLayout.Instance}}" /></MenuItem.Icon>
+              </MenuItem>
+              <MenuItem Header="CPU" Command="{ReflectionBinding ToggleColumnCommand, Source={x:Static vm:ColumnLayout.Instance}}" CommandParameter="cpu">
+                <MenuItem.Icon><TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{ReflectionBinding ShowCpu, Source={x:Static vm:ColumnLayout.Instance}}" /></MenuItem.Icon>
+              </MenuItem>
+              <MenuItem Header="GPU" Command="{ReflectionBinding ToggleColumnCommand, Source={x:Static vm:ColumnLayout.Instance}}" CommandParameter="gpu">
+                <MenuItem.Icon><TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{ReflectionBinding ShowGpu, Source={x:Static vm:ColumnLayout.Instance}}" /></MenuItem.Icon>
+              </MenuItem>
+              <MenuItem Header="Memory" Command="{ReflectionBinding ToggleColumnCommand, Source={x:Static vm:ColumnLayout.Instance}}" CommandParameter="mem">
+                <MenuItem.Icon><TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{ReflectionBinding ShowMem, Source={x:Static vm:ColumnLayout.Instance}}" /></MenuItem.Icon>
+              </MenuItem>
+              <MenuItem Header="Disk" Command="{ReflectionBinding ToggleColumnCommand, Source={x:Static vm:ColumnLayout.Instance}}" CommandParameter="disk">
+                <MenuItem.Icon><TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{ReflectionBinding ShowDisk, Source={x:Static vm:ColumnLayout.Instance}}" /></MenuItem.Icon>
+              </MenuItem>
+              <MenuItem Header="Network" Command="{ReflectionBinding ToggleColumnCommand, Source={x:Static vm:ColumnLayout.Instance}}" CommandParameter="net">
+                <MenuItem.Icon><TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{ReflectionBinding ShowNet, Source={x:Static vm:ColumnLayout.Instance}}" /></MenuItem.Icon>
+              </MenuItem>
+              <Separator />
+              <MenuItem Header="Memory units">
                 <MenuItem Header="Automatic (MB or GB)" Command="{Binding SetMemoryUnitCommand}" CommandParameter="auto">
                   <MenuItem.Icon><TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{Binding MemoryAuto}" /></MenuItem.Icon>
                 </MenuItem>
@@ -110,10 +87,82 @@
                 <MenuItem Header="Always GB" Command="{Binding SetMemoryUnitCommand}" CommandParameter="gb">
                   <MenuItem.Icon><TextBlock Classes="icon" FontSize="12" Text="&#xE73E;" IsVisible="{Binding MemoryGb}" /></MenuItem.Icon>
                 </MenuItem>
-              </ContextMenu>
-            </Button.ContextMenu>
+              </MenuItem>
+            </ContextMenu>
+          </StackPanel.ContextMenu>
+
+          <Button Classes="header" HorizontalContentAlignment="Left" VerticalAlignment="Stretch" VerticalContentAlignment="Bottom" Padding="0,0,0,8"
+                  Width="{ReflectionBinding NameWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                  Content="{Binding NameHeader}" Command="{Binding SortCommand}" CommandParameter="name"
+                  ToolTip.Tip="Click to sort · right-click to choose columns" />
+          <c:ColumnResizer Column="name">
+            <Border Classes="divider" />
+          </c:ColumnResizer>
+          <Border Width="{ReflectionBinding StatusWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowStatus, Source={x:Static vm:ColumnLayout.Instance}}" Padding="0,0,0,8">
+            <TextBlock Classes="label" FontSize="12" FontWeight="SemiBold" Text="Status" VerticalAlignment="Bottom" HorizontalAlignment="Center" />
+          </Border>
+          <c:ColumnResizer Column="status" IsVisible="{ReflectionBinding ShowStatus, Source={x:Static vm:ColumnLayout.Instance}}">
+            <Border Classes="divider" />
+          </c:ColumnResizer>
+          <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch" VerticalContentAlignment="Bottom" Padding="0,0,0,8"
+                  Width="{ReflectionBinding PidWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowPid, Source={x:Static vm:ColumnLayout.Instance}}"
+                  Content="{Binding PidHeader}" Command="{Binding SortCommand}" CommandParameter="pid" />
+          <c:ColumnResizer Column="pid" IsVisible="{ReflectionBinding ShowPid, Source={x:Static vm:ColumnLayout.Instance}}">
+            <Border Classes="divider" />
+          </c:ColumnResizer>
+          <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch" VerticalContentAlignment="Bottom"
+                  Padding="0,0,0,8" Width="{ReflectionBinding CpuWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowCpu, Source={x:Static vm:ColumnLayout.Instance}}"
+                  Command="{Binding SortCommand}" CommandParameter="cpu" ToolTip.Tip="Click to sort">
+            <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom">
+              <TextBlock Classes="coltotal" HorizontalAlignment="Right" Text="{Binding TotalCpuText}" />
+              <TextBlock HorizontalAlignment="Right" Text="{Binding CpuHeader}" />
+            </StackPanel>
           </Button>
-          <c:ColumnResizer Column="mem">
+          <c:ColumnResizer Column="cpu" IsVisible="{ReflectionBinding ShowCpu, Source={x:Static vm:ColumnLayout.Instance}}">
+            <Border Classes="divider" />
+          </c:ColumnResizer>
+          <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch" VerticalContentAlignment="Bottom"
+                  Padding="0,0,0,8" Width="{ReflectionBinding GpuWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowGpu, Source={x:Static vm:ColumnLayout.Instance}}"
+                  Command="{Binding SortCommand}" CommandParameter="gpu" ToolTip.Tip="Click to sort">
+            <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom">
+              <TextBlock Classes="coltotal" HorizontalAlignment="Right" Text="{Binding TotalGpuText}" />
+              <TextBlock HorizontalAlignment="Right" Text="{Binding GpuHeader}" />
+            </StackPanel>
+          </Button>
+          <c:ColumnResizer Column="gpu" IsVisible="{ReflectionBinding ShowGpu, Source={x:Static vm:ColumnLayout.Instance}}">
+            <Border Classes="divider" />
+          </c:ColumnResizer>
+          <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch" VerticalContentAlignment="Bottom"
+                  Padding="0,0,0,8" Width="{ReflectionBinding MemWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowMem, Source={x:Static vm:ColumnLayout.Instance}}"
+                  Command="{Binding SortCommand}" CommandParameter="mem" ToolTip.Tip="Click to sort · right-click for units">
+            <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom">
+              <TextBlock Classes="coltotal" HorizontalAlignment="Right" Text="{Binding TotalMemText}" />
+              <TextBlock HorizontalAlignment="Right" Text="{Binding MemoryHeader}" />
+            </StackPanel>
+          </Button>
+          <c:ColumnResizer Column="mem" IsVisible="{ReflectionBinding ShowMem, Source={x:Static vm:ColumnLayout.Instance}}">
+            <Border Classes="divider" />
+          </c:ColumnResizer>
+          <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch" VerticalContentAlignment="Bottom"
+                  Padding="0,0,0,8" Width="{ReflectionBinding DiskWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowDisk, Source={x:Static vm:ColumnLayout.Instance}}"
+                  Command="{Binding SortCommand}" CommandParameter="disk" ToolTip.Tip="Click to sort">
+            <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom">
+              <TextBlock Classes="coltotal" HorizontalAlignment="Right" Text="{Binding TotalDiskText}" />
+              <TextBlock HorizontalAlignment="Right" Text="{Binding DiskHeader}" />
+            </StackPanel>
+          </Button>
+          <c:ColumnResizer Column="disk" IsVisible="{ReflectionBinding ShowDisk, Source={x:Static vm:ColumnLayout.Instance}}">
+            <Border Classes="divider" />
+          </c:ColumnResizer>
+          <Button Classes="header" HorizontalContentAlignment="Right" VerticalAlignment="Stretch" VerticalContentAlignment="Bottom"
+                  Padding="0,0,0,8" Width="{ReflectionBinding NetWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowNet, Source={x:Static vm:ColumnLayout.Instance}}"
+                  Command="{Binding SortCommand}" CommandParameter="net" ToolTip.Tip="{Binding NetTip}">
+            <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom">
+              <TextBlock Classes="coltotal" HorizontalAlignment="Right" Text="{Binding TotalNetText}" />
+              <TextBlock HorizontalAlignment="Right" Text="{Binding NetHeader}" />
+            </StackPanel>
+          </Button>
+          <c:ColumnResizer Column="net" IsVisible="{ReflectionBinding ShowNet, Source={x:Static vm:ColumnLayout.Instance}}">
             <Border Classes="divider" />
           </c:ColumnResizer>
         </StackPanel>
@@ -201,18 +250,30 @@
                              Text="{Binding CountText}" />
                   <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                 </DockPanel>
+                <Panel Width="{ReflectionBinding StatusWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowStatus, Source={x:Static vm:ColumnLayout.Instance}}">
+                  <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Classes="icon status-eco" FontSize="13" Text="&#xEC0A;" IsVisible="{Binding IsEfficient}" ToolTip.Tip="Efficiency mode" />
+                    <TextBlock Classes="icon status-paused" FontSize="13" Text="&#xE769;" IsVisible="{Binding IsSuspended}" ToolTip.Tip="Suspended" />
+                  </StackPanel>
+                </Panel>
                 <TextBlock Classes="label" TextAlignment="Right" VerticalAlignment="Center"
-                           Width="{ReflectionBinding PidWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                           Width="{ReflectionBinding PidWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowPid, Source={x:Static vm:ColumnLayout.Instance}}"
                            Text="{Binding PidText}" />
                 <TextBlock TextAlignment="Right" VerticalAlignment="Center"
-                           Width="{ReflectionBinding CpuWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                           Width="{ReflectionBinding CpuWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowCpu, Source={x:Static vm:ColumnLayout.Instance}}"
                            Text="{Binding CpuText}" />
                 <TextBlock TextAlignment="Right" VerticalAlignment="Center"
-                           Width="{ReflectionBinding GpuWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                           Width="{ReflectionBinding GpuWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowGpu, Source={x:Static vm:ColumnLayout.Instance}}"
                            Text="{Binding GpuText}" />
                 <TextBlock TextAlignment="Right" VerticalAlignment="Center"
-                           Width="{ReflectionBinding MemWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                           Width="{ReflectionBinding MemWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowMem, Source={x:Static vm:ColumnLayout.Instance}}"
                            Text="{Binding MemoryText}" />
+                <TextBlock TextAlignment="Right" VerticalAlignment="Center"
+                           Width="{ReflectionBinding DiskWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowDisk, Source={x:Static vm:ColumnLayout.Instance}}"
+                           Text="{Binding DiskText}" />
+                <TextBlock TextAlignment="Right" VerticalAlignment="Center"
+                           Width="{ReflectionBinding NetWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowNet, Source={x:Static vm:ColumnLayout.Instance}}"
+                           Text="{Binding NetText}" />
               </StackPanel>
             </DataTemplate>
 
@@ -224,18 +285,30 @@
                          VerticalAlignment="Center" RenderOptions.BitmapInterpolationMode="HighQuality" />
                   <TextBlock Classes="label" FontSize="13" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                 </DockPanel>
-                <TextBlock Classes="label" TextAlignment="Right" VerticalAlignment="Center"
-                           Width="{ReflectionBinding PidWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                <Panel Width="{ReflectionBinding StatusWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowStatus, Source={x:Static vm:ColumnLayout.Instance}}">
+                  <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Classes="icon status-eco" FontSize="13" Text="&#xEC0A;" IsVisible="{Binding IsEfficient}" ToolTip.Tip="Efficiency mode" />
+                    <TextBlock Classes="icon status-paused" FontSize="13" Text="&#xE769;" IsVisible="{Binding IsSuspended}" ToolTip.Tip="Suspended" />
+                  </StackPanel>
+                </Panel>
+                <TextBlock Classes="label" FontSize="13" TextAlignment="Right" VerticalAlignment="Center"
+                           Width="{ReflectionBinding PidWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowPid, Source={x:Static vm:ColumnLayout.Instance}}"
                            Text="{Binding Pid}" />
                 <TextBlock Classes="label" FontSize="13" TextAlignment="Right" VerticalAlignment="Center"
-                           Width="{ReflectionBinding CpuWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                           Width="{ReflectionBinding CpuWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowCpu, Source={x:Static vm:ColumnLayout.Instance}}"
                            Text="{Binding CpuText}" />
                 <TextBlock Classes="label" FontSize="13" TextAlignment="Right" VerticalAlignment="Center"
-                           Width="{ReflectionBinding GpuWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                           Width="{ReflectionBinding GpuWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowGpu, Source={x:Static vm:ColumnLayout.Instance}}"
                            Text="{Binding GpuText}" />
                 <TextBlock Classes="label" FontSize="13" TextAlignment="Right" VerticalAlignment="Center"
-                           Width="{ReflectionBinding MemWidth, Source={x:Static vm:ColumnLayout.Instance}}"
+                           Width="{ReflectionBinding MemWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowMem, Source={x:Static vm:ColumnLayout.Instance}}"
                            Text="{Binding MemoryText}" />
+                <TextBlock Classes="label" FontSize="13" TextAlignment="Right" VerticalAlignment="Center"
+                           Width="{ReflectionBinding DiskWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowDisk, Source={x:Static vm:ColumnLayout.Instance}}"
+                           Text="{Binding DiskText}" />
+                <TextBlock Classes="label" FontSize="13" TextAlignment="Right" VerticalAlignment="Center"
+                           Width="{ReflectionBinding NetWidth, Source={x:Static vm:ColumnLayout.Instance}}" IsVisible="{ReflectionBinding ShowNet, Source={x:Static vm:ColumnLayout.Instance}}"
+                           Text="{Binding NetText}" />
               </StackPanel>
             </DataTemplate>
 

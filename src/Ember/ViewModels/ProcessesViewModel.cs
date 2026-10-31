@@ -56,19 +56,42 @@ public partial class ProcessesViewModel : ViewModelBase
     public string PidHeader => Header("pid", "PID");
     public string CpuHeader => Header("cpu", "CPU");
     public string GpuHeader => Header("gpu", "GPU");
+    public string DiskHeader => Header("disk", "Disk");
+    public string NetHeader => Header("net", "Network");
     public string MemoryHeader => Header("mem", "Memory");
 
     // System-wide totals shown above the column names (like Task Manager).
     [ObservableProperty] private string _totalCpuText = "";
     [ObservableProperty] private string _totalGpuText = "";
     [ObservableProperty] private string _totalMemText = "";
+    [ObservableProperty] private string _totalDiskText = "";
+    [ObservableProperty] private string _totalNetText = "";
+
+    /// <summary>"Needs admin" hint for the Network column header when tracing isn't available.</summary>
+    [ObservableProperty] private string _netTip = "Click to sort";
 
     public void UpdateTotals(HardwareSnapshot s)
     {
         TotalCpuText = s.CpuLoad is float c ? $"{c:0}%" : "";
         TotalGpuText = s.GpuLoad is float g ? $"{g:0}%" : "";
         TotalMemText = s.RamLoad is float m ? $"{m:0}%" : "";
+
+        // Disk: busiest drive's activity (needs admin + sensor driver). Network: share of the link in use.
+        var disk = s.Sensors
+            .Where(r => r.HardwareType == LibreHardwareMonitor.Hardware.HardwareType.Storage &&
+                        r.Type == LibreHardwareMonitor.Hardware.SensorType.Load && r.Name == "Total Activity")
+            .Select(r => r.Value).Max();
+        TotalDiskText = disk is float d ? $"{d:0}%" : "";
+
+        var primary = s.Network.FirstOrDefault(n => n.IsPrimary);
+        TotalNetText = primary is { LinkBps: > 0 }
+            ? $"{Math.Min(100, (primary.DownBps + primary.UpBps) * 8 * 100 / primary.LinkBps):0}%"
+            : "";
     }
+
+    /// <summary>Set by the main view-model after each sample.</summary>
+    public void SetNetworkAvailable(bool available) =>
+        NetTip = available ? "Click to sort" : "Per-app network needs Ember running as admin";
 
     /// <summary>Set by the main view-model so the header menu and Settings share one saved setting.</summary>
     public Action<string>? SetMemoryUnitRequested { get; set; }
@@ -110,13 +133,15 @@ public partial class ProcessesViewModel : ViewModelBase
         else
         {
             SortKey = key;
-            _descending = key is "cpu" or "mem" or "gpu";
+            _descending = key is "cpu" or "mem" or "gpu" or "disk" or "net";
         }
 
         OnPropertyChanged(nameof(NameHeader));
         OnPropertyChanged(nameof(PidHeader));
         OnPropertyChanged(nameof(CpuHeader));
         OnPropertyChanged(nameof(GpuHeader));
+        OnPropertyChanged(nameof(DiskHeader));
+        OnPropertyChanged(nameof(NetHeader));
         OnPropertyChanged(nameof(MemoryHeader));
         Refresh();
     }
@@ -221,6 +246,8 @@ public partial class ProcessesViewModel : ViewModelBase
             "pid" => a.FirstPid.CompareTo(b.FirstPid),
             "mem" => a.Memory.CompareTo(b.Memory),
             "gpu" => a.Gpu.CompareTo(b.Gpu),
+            "disk" => a.Disk.CompareTo(b.Disk),
+            "net" => (double.IsNaN(a.Net) ? -1 : a.Net).CompareTo(double.IsNaN(b.Net) ? -1 : b.Net),
             _ => a.Cpu.CompareTo(b.Cpu),
         };
         if (_descending) c = -c;
@@ -235,6 +262,8 @@ public partial class ProcessesViewModel : ViewModelBase
             "pid" => a.Pid.CompareTo(b.Pid),
             "mem" => a.Memory.CompareTo(b.Memory),
             "gpu" => a.Gpu.CompareTo(b.Gpu),
+            "disk" => a.Disk.CompareTo(b.Disk),
+            "net" => (double.IsNaN(a.Net) ? -1 : a.Net).CompareTo(double.IsNaN(b.Net) ? -1 : b.Net),
             _ => a.Cpu.CompareTo(b.Cpu),
         };
         if (_descending) c = -c;
@@ -498,6 +527,8 @@ public partial class ProcessGroup : ObservableObject
     public int FirstPid { get; private set; }
     public double Cpu { get; private set; }
     public double Gpu { get; private set; }
+    public double Disk { get; private set; }
+    public double Net { get; private set; }
     public long Memory { get; private set; }
 
     [ObservableProperty] private string _name = "";
@@ -506,6 +537,10 @@ public partial class ProcessGroup : ObservableObject
     [ObservableProperty] private string _memoryText = "";
     [ObservableProperty] private string _pidText = "";
     [ObservableProperty] private string _gpuText = "";
+    [ObservableProperty] private string _diskText = "";
+    [ObservableProperty] private string _netText = "";
+    [ObservableProperty] private bool _isEfficient;
+    [ObservableProperty] private bool _isSuspended;
     [ObservableProperty] private string _countText = "";
 
     [ObservableProperty]
@@ -549,6 +584,12 @@ public partial class ProcessGroup : ObservableObject
         Gpu = Math.Min(procs.Sum(p => p.Gpu), 100);
         GpuText = Gpu < 0.05 ? "0%" : $"{Gpu:0.0}%";
         MemoryText = Format.ProcessMemory(Memory);
+        Disk = procs.Sum(p => p.Disk);
+        DiskText = Format.DiskRate(Disk);
+        Net = procs.Any(p => double.IsNaN(p.Net)) ? double.NaN : procs.Sum(p => p.Net);
+        NetText = Format.ProcessNet(Net);
+        IsEfficient = procs.Any(p => p.IsEfficient);
+        IsSuspended = procs.All(p => p.IsSuspended);
     }
 }
 
@@ -569,6 +610,12 @@ public partial class ProcessRow : ObservableObject
     [ObservableProperty] private long _memory;
     [ObservableProperty] private double _gpu;
     [ObservableProperty] private string _gpuText = "";
+    [ObservableProperty] private double _disk;
+    [ObservableProperty] private double _net;
+    [ObservableProperty] private string _diskText = "";
+    [ObservableProperty] private string _netText = "";
+    [ObservableProperty] private bool _isEfficient;
+    [ObservableProperty] private bool _isSuspended;
     [ObservableProperty] private string _cpuText = "";
     [ObservableProperty] private string _memoryText = "";
     [ObservableProperty] private IImage? _icon;
@@ -584,5 +631,11 @@ public partial class ProcessRow : ObservableObject
         Gpu = info.Gpu;
         GpuText = info.Gpu < 0.05 ? "0%" : $"{info.Gpu:0.0}%";
         MemoryText = Format.ProcessMemory(info.Memory);
+        Disk = info.Disk;
+        DiskText = Format.DiskRate(info.Disk);
+        Net = info.Net;
+        NetText = Format.ProcessNet(info.Net);
+        IsEfficient = info.IsEfficient;
+        IsSuspended = info.IsSuspended;
     }
 }

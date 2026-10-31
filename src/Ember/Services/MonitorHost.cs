@@ -37,6 +37,9 @@ public sealed class MonitorHost : IDisposable
         set => _sensors.PreferredGpu = value;
     }
 
+    /// <summary>Whether per-process network numbers are being collected (admin only).</summary>
+    public bool ProcessNetworkAvailable => _processes.NetworkAvailable;
+
     public bool SampleProcesses
     {
         get => _sampleProcesses;
@@ -92,6 +95,7 @@ public sealed class MonitorHost : IDisposable
         }
 
         _sensors.Dispose();
+        _processes.Dispose();
     }
 
     /// <summary>Stops the loop and waits briefly so fans are restored to BIOS control before exit.</summary>

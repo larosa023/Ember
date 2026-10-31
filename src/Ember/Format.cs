@@ -68,6 +68,15 @@ public static class Format
         };
     }
 
+    /// <summary>Per-process network column: "—" when unavailable, zero shown in the chosen unit.</summary>
+    public static string ProcessNet(double bytesPerSecond)
+    {
+        if (double.IsNaN(bytesPerSecond)) return Dash;
+        if (bytesPerSecond < 125)
+            return NetUnit is "bytes" or "mbs" ? "0 MB/s" : "0 Mbps";
+        return NetRate(bytesPerSecond);
+    }
+
     public static string LinkSpeed(long bps) =>
         bps <= 0 ? Dash : bps >= 1_000_000_000 ? $"{bps / 1e9:0.#} Gbps" : $"{bps / 1e6:0} Mbps";
 
