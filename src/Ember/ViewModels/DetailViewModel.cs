@@ -61,16 +61,12 @@ public partial class DetailViewModel : ViewModelBase
     [RelayCommand]
     private void Back() => _back();
 
-    public void Update(HardwareSnapshot s)
+    /// <summary>
+    /// Keeps the 2-minute history every tick (so the graph is full when the page opens);
+    /// everything else is only rebuilt while the page is on screen.
+    /// </summary>
+    public void Update(HardwareSnapshot s, bool visible)
     {
-        var readings = Kind switch
-        {
-            DetailKind.Cpu => s.Sensors.Where(r => r.HardwareType == HardwareType.Cpu).ToList(),
-            DetailKind.Gpu => s.Sensors.Where(r => r.Hardware == s.GpuName &&
-                r.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel).ToList(),
-            _ => s.Sensors.Where(r => r.HardwareType == HardwareType.Memory).ToList(),
-        };
-
         double main = Kind switch
         {
             DetailKind.Cpu => s.CpuLoad ?? 0,
@@ -79,7 +75,16 @@ public partial class DetailViewModel : ViewModelBase
         };
         Array.Copy(_buffer, 1, _buffer, 0, HistoryLength - 1);
         _buffer[^1] = main;
+        if (!visible) return;
         History = (double[])_buffer.Clone();
+
+        var readings = Kind switch
+        {
+            DetailKind.Cpu => s.Sensors.Where(r => r.HardwareType == HardwareType.Cpu).ToList(),
+            DetailKind.Gpu => s.Sensors.Where(r => r.Hardware == s.GpuName &&
+                r.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel).ToList(),
+            _ => s.Sensors.Where(r => r.HardwareType == HardwareType.Memory).ToList(),
+        };
 
         switch (Kind)
         {

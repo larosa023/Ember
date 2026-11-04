@@ -132,22 +132,32 @@ public partial class MainWindowViewModel : ViewModelBase
         else if (ShowDriverBanner && snapshot.CpuTemp is not null)
             ShowDriverBanner = false;
 
+        _lastSnapshot = snapshot;
+
+        // Only the page on screen is rebuilt each tick; hidden pages catch up when opened.
         Dashboard.Update(snapshot);
-        CpuDetail.Update(snapshot);
-        GpuDetail.Update(snapshot);
-        MemoryDetail.Update(snapshot);
-        StorageDetail.Update(snapshot);
-        NetworkDetail.Update(snapshot);
-        if (CurrentPage == History) History.RefreshIfChanged();
-        Fans.Update(snapshot);
-        Sensors.Update(snapshot.Sensors);
+        CpuDetail.Update(snapshot, CurrentPage == CpuDetail);
+        GpuDetail.Update(snapshot, CurrentPage == GpuDetail);
+        MemoryDetail.Update(snapshot, CurrentPage == MemoryDetail);
+        UpdateVisiblePage(snapshot);
         Settings.UpdateGpuList(snapshot.GpuNames);
-        Processes.UpdateTotals(snapshot);
         if (processes is not null)
         {
             Processes.SetNetworkAvailable(_host.ProcessNetworkAvailable);
             Processes.Update(processes);
         }
+    }
+
+    private HardwareSnapshot? _lastSnapshot;
+
+    private void UpdateVisiblePage(HardwareSnapshot snapshot)
+    {
+        if (CurrentPage == StorageDetail) StorageDetail.Update(snapshot);
+        else if (CurrentPage == NetworkDetail) NetworkDetail.Update(snapshot);
+        else if (CurrentPage == History) History.RefreshIfChanged();
+        else if (CurrentPage == Fans) Fans.Update(snapshot);
+        else if (CurrentPage == Sensors) Sensors.Update(snapshot.Sensors);
+        else if (CurrentPage == Processes) Processes.UpdateTotals(snapshot);
     }
 
     /// <summary>Visits every page once; used by the release build's smoke test.</summary>
@@ -222,6 +232,13 @@ public partial class MainWindowViewModel : ViewModelBase
         if (value == History) History.Refresh();
         if (value == Services && Services.Items.Count == 0) _ = Services.Refresh();
         if (value == Specs) _ = Specs.LoadAsync();
+
+        // Show current numbers right away instead of waiting for the next tick.
+        if (_lastSnapshot is { } last)
+        {
+            if (value is DetailViewModel detail) detail.Update(last, visible: true);
+            else UpdateVisiblePage(last);
+        }
     }
 
     [RelayCommand]
