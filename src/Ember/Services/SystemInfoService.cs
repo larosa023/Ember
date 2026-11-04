@@ -136,25 +136,19 @@ public sealed class SystemInfoService
 
     // ---------- Network ----------
 
-    private IReadOnlyList<NetAdapterInfo> ReadNetwork()
-    {
-        var now = Stopwatch.GetTimestamp();
-        var list = new List<NetAdapterInfo>();
-        var seen = new HashSet<string>();
+    /// <summary>Adapter details that rarely change; the list is rebuilt every 15 seconds.</summary>
+    private sealed record Adapter(NetworkInterface Nic, string Kind, bool IsVirtual, bool HasGateway, long Speed, string? Ipv4);
 
+    private List<Adapter> _adapters = new();
+    private DateTime _adaptersRead = DateTime.MinValue;
+
+    private void RefreshAdapters()
+    {
+        var adapters = new List<Adapter>();
         foreach (var nic in NetworkInterface.GetAllNetworkInterfaces())
         {
             if (nic.OperationalStatus != OperationalStatus.Up) continue;
             if (nic.NetworkInterfaceType is NetworkInterfaceType.Loopback or NetworkInterfaceType.Tunnel) continue;
-
-            long rx, tx;
-            try
-            {
-                var stats = nic.GetIPStatistics();
-                rx = stats.BytesReceived;
-                tx = stats.BytesSent;
-            }
-            catch { continue; }
 
             string? ipv4 = null;
             bool hasGateway = false;
@@ -167,19 +161,6 @@ public sealed class SystemInfoService
                     g.Address.AddressFamily == AddressFamily.InterNetwork && !g.Address.Equals(IPAddress.Any));
             }
             catch { }
-
-            double down = 0, up = 0;
-            if (_netLast.TryGetValue(nic.Id, out var last))
-            {
-                var seconds = Stopwatch.GetElapsedTime(last.Timestamp, now).TotalSeconds;
-                if (seconds > 0.05)
-                {
-                    down = Math.Max(0, (rx - last.Rx) / seconds);
-                    up = Math.Max(0, (tx - last.Tx) / seconds);
-                }
-            }
-            _netLast[nic.Id] = (rx, tx, now);
-            seen.Add(nic.Id);
 
             var isVirtual = VirtualHints.Any(h =>
                 nic.Description.Contains(h, StringComparison.OrdinalIgnoreCase) ||
@@ -197,8 +178,51 @@ public sealed class SystemInfoService
             long speed = 0;
             try { speed = nic.Speed; } catch { }
 
-            list.Add(new NetAdapterInfo(nic.Id, nic.Name, nic.Description, kind,
-                isVirtual, hasGateway, speed, ipv4, down, up, rx, tx));
+            adapters.Add(new Adapter(nic, kind, isVirtual, hasGateway, speed, ipv4));
+        }
+        _adapters = adapters;
+        _adaptersRead = DateTime.UtcNow;
+    }
+
+    private IReadOnlyList<NetAdapterInfo> ReadNetwork()
+    {
+        if (DateTime.UtcNow - _adaptersRead > TimeSpan.FromSeconds(15)) RefreshAdapters();
+
+        var now = Stopwatch.GetTimestamp();
+        var list = new List<NetAdapterInfo>(_adapters.Count);
+        var seen = new HashSet<string>();
+
+        foreach (var a in _adapters)
+        {
+            var nic = a.Nic;
+            long rx, tx;
+            try
+            {
+                var stats = nic.GetIPStatistics();   // live counters, cheap
+                rx = stats.BytesReceived;
+                tx = stats.BytesSent;
+            }
+            catch
+            {
+                _adaptersRead = DateTime.MinValue;   // adapter went away: rebuild next tick
+                continue;
+            }
+
+            double down = 0, up = 0;
+            if (_netLast.TryGetValue(nic.Id, out var last))
+            {
+                var seconds = Stopwatch.GetElapsedTime(last.Timestamp, now).TotalSeconds;
+                if (seconds > 0.05)
+                {
+                    down = Math.Max(0, (rx - last.Rx) / seconds);
+                    up = Math.Max(0, (tx - last.Tx) / seconds);
+                }
+            }
+            _netLast[nic.Id] = (rx, tx, now);
+            seen.Add(nic.Id);
+
+            list.Add(new NetAdapterInfo(nic.Id, nic.Name, nic.Description, a.Kind,
+                a.IsVirtual, a.HasGateway, a.Speed, a.Ipv4, down, up, rx, tx));
         }
 
         foreach (var stale in _netLast.Keys.Where(k => !seen.Contains(k)).ToList())

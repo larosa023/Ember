@@ -205,12 +205,23 @@ public sealed class SensorService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Refreshes every sensor each tick, except drives: SMART/NVMe queries are the slowest part of a
+    /// refresh and drive temperatures change slowly, so storage is read every 5th tick.
+    /// </summary>
     private sealed class UpdateVisitor : IVisitor
     {
-        public void VisitComputer(IComputer computer) => computer.Traverse(this);
+        private long _tick;
+
+        public void VisitComputer(IComputer computer)
+        {
+            _tick++;
+            computer.Traverse(this);
+        }
 
         public void VisitHardware(IHardware hardware)
         {
+            if (hardware.HardwareType == HardwareType.Storage && _tick % 5 != 1) return;
             hardware.Update();
             foreach (var sub in hardware.SubHardware) sub.Accept(this);
         }

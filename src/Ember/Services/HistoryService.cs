@@ -36,15 +36,24 @@ public sealed class HistoryService : IDisposable
     public HistoryService(SettingsService settings)
     {
         _settings = settings;
-        try
+
+        // Reading up to two days of logs takes a moment, so it never delays the window appearing.
+        Task.Run(() =>
         {
-            CleanUpOldLogs();
-            LoadRecentLogs();
-        }
-        catch
-        {
-            // History is a nice-to-have; never block startup on it.
-        }
+            try
+            {
+                CleanUpOldLogs();
+                var loaded = LoadRecentLogs();
+                lock (_gate)
+                {
+                    _samples.InsertRange(0, loaded.Where(x => _samples.Count == 0 || x.Time < _samples[0].Time));
+                }
+            }
+            catch
+            {
+                // History is a nice-to-have; never fail startup on it.
+            }
+        });
     }
 
     public int Count
@@ -148,9 +157,10 @@ public sealed class HistoryService : IDisposable
     }
 
     /// <summary>Reload yesterday's and today's logs so the History page survives a restart.</summary>
-    private void LoadRecentLogs()
+    private static List<HistorySample> LoadRecentLogs()
     {
-        if (!Directory.Exists(LogsDir)) return;
+        var samples = new List<HistorySample>();
+        if (!Directory.Exists(LogsDir)) return samples;
         var cutoff = DateTime.Now - Keep;
         var today = DateOnly.FromDateTime(DateTime.Now);
 
@@ -169,11 +179,12 @@ public sealed class HistoryService : IDisposable
                 if (t < cutoff) continue;
 
                 static float P(string v) => float.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out var f) ? f : float.NaN;
-                _samples.Add(new HistorySample(t, P(p[1]), P(p[2]), P(p[3]), P(p[4]), P(p[5]), P(p[6]), P(p[7]),
+                samples.Add(new HistorySample(t, P(p[1]), P(p[2]), P(p[3]), P(p[4]), P(p[5]), P(p[6]), P(p[7]),
                     P(p[8]) * 1e6f / 8, P(p[9]) * 1e6f / 8));
             }
         }
-        _samples.Sort((a, b) => a.Time.CompareTo(b.Time));
+        samples.Sort((a, b) => a.Time.CompareTo(b.Time));
+        return samples;
     }
 
     private static float V(float? v) => v ?? float.NaN;
