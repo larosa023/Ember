@@ -38,7 +38,7 @@
         </Button>
       </StackPanel>
       <StackPanel Orientation="Horizontal" Spacing="8">
-        <TextBox Classes="search" Width="280" Watermark="Search services" Text="{Binding Search}">
+        <TextBox x:Name="SearchBox" Classes="search" Width="280" Watermark="Search services  (Ctrl+F)" Text="{Binding Search}">
           <TextBox.InnerLeftContent>
             <TextBlock Classes="icon" FontSize="13" Margin="10,0,2,0" Foreground="{DynamicResource TextMuted}" Text="&#xE721;" />
           </TextBox.InnerLeftContent>

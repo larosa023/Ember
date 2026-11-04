@@ -57,6 +57,9 @@ public sealed class AlertService
              hot: true);
     }
 
+    /// <summary>A neutral notification (e.g. "update ready").</summary>
+    public void ShowInfo(string title, string message) => Show(title, message, hot: false);
+
     public void ShowTest() =>
         Show("Test alert", "This is how Ember lets you know when your CPU or GPU gets too hot.", hot: false);
 

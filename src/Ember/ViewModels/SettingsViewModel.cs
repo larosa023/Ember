@@ -541,6 +541,9 @@ public partial class SettingsViewModel : ViewModelBase
 
     public Task CheckForUpdatesSilentlyAsync() => CheckAsync(userInitiated: false);
 
+    /// <summary>Raised with the version number when a background check has downloaded an update.</summary>
+    public event Action<string>? UpdateDownloaded;
+
     private async Task CheckAsync(bool userInitiated)
     {
         if (IsDownloading || UpdateReady) return;
@@ -571,6 +574,7 @@ public partial class SettingsViewModel : ViewModelBase
             IsDownloading = false;
             UpdateReady = true;
             UpdateStatus = $"Ember {version} is ready. Restart to install.";
+            if (!userInitiated) UpdateDownloaded?.Invoke(version);
         }
         catch (Exception ex)
         {

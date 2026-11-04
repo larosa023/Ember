@@ -66,6 +66,7 @@ public partial class App : Application
             _overlay = new OverlayController(_settings, ShowWindow);
             _hotkeys = new HotkeyService();
             _vm = new MainWindowViewModel(_host, _settings, themes, new UpdateService(), alerts, history, _overlay, _hotkeys);
+            if (!Program.SmokeTest) _vm.RestoreLastPage();
             _host.Tick += UpdateTrayTooltip;
             _host.Tick += (snapshot, _) => alerts.Check(snapshot);
             _host.Tick += (snapshot, _) => _overlay.Update(snapshot);
@@ -83,6 +84,7 @@ public partial class App : Application
 
             desktop.Exit += (_, _) =>
             {
+                if (_window is not null) SavePlacement(_window);
                 _host.Dispose();
                 history.Dispose();
                 _hotkeys?.Dispose();
@@ -106,9 +108,22 @@ public partial class App : Application
             _host.Start();
 
             if (Program.SmokeTest)
+            {
                 RunSmokeTest();
-            else if (_settings.Current.AutoCheckUpdates)
-                _ = _vm.Settings.CheckForUpdatesSilentlyAsync();
+            }
+            else
+            {
+                // Ember often lives in the tray for days, so check on launch and every 4 hours.
+                _vm.Settings.UpdateDownloaded += version => alerts.ShowInfo(
+                    "Ember update ready", $"Version {version} is downloaded. Click \"Update ready\" in Ember to restart and install it.");
+                if (_settings.Current.AutoCheckUpdates) _ = _vm.Settings.CheckForUpdatesSilentlyAsync();
+                var updateTimer = new DispatcherTimer { Interval = TimeSpan.FromHours(4) };
+                updateTimer.Tick += (_, _) =>
+                {
+                    if (_settings.Current.AutoCheckUpdates) _ = _vm.Settings.CheckForUpdatesSilentlyAsync();
+                };
+                updateTimer.Start();
+            }
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -153,9 +168,11 @@ public partial class App : Application
     private MainWindow CreateWindow()
     {
         var window = new MainWindow { DataContext = _vm };
+        RestorePlacement(window);
 
         window.Closing += (_, e) =>
         {
+            SavePlacement(window);
             if (!_quitting && _settings?.Current.CloseToTray == true)
             {
                 e.Cancel = true;
@@ -174,7 +191,11 @@ public partial class App : Application
             if (e.Property != Window.WindowStateProperty) return;
             if (window.WindowState == WindowState.Minimized)
             {
-                if (_settings?.Current.MinimizeToTray == true) window.Hide();
+                if (_settings?.Current.MinimizeToTray == true)
+                {
+                    SavePlacement(window);
+                    window.Hide();
+                }
             }
             else
             {
@@ -183,6 +204,46 @@ public partial class App : Application
         };
 
         return window;
+    }
+
+    /// <summary>Put the window back where it was last time, if that spot is still on a screen.</summary>
+    private void RestorePlacement(Window window)
+    {
+        var c = _settings?.Current;
+        if (c is null) return;
+        if (c.WindowWidth is double w && c.WindowHeight is double h && w >= window.MinWidth && h >= window.MinHeight)
+        {
+            window.Width = w;
+            window.Height = h;
+        }
+        if (c.WindowX is double x && c.WindowY is double y)
+        {
+            var point = new PixelPoint((int)x, (int)y);
+            window.Opened += (_, _) =>
+            {
+                if (window.Screens.All.Any(s => s.WorkingArea.Contains(point + new PixelPoint(40, 40))))
+                {
+                    window.Position = point;
+                }
+            };
+            window.WindowStartupLocation = WindowStartupLocation.Manual;
+        }
+        if (c.WindowMaximized) window.WindowState = WindowState.Maximized;
+    }
+
+    private void SavePlacement(Window window)
+    {
+        var c = _settings?.Current;
+        if (c is null || !window.IsVisible) return;
+        c.WindowMaximized = window.WindowState == WindowState.Maximized;
+        if (window.WindowState == WindowState.Normal)
+        {
+            c.WindowX = window.Position.X;
+            c.WindowY = window.Position.Y;
+            c.WindowWidth = window.Width;
+            c.WindowHeight = window.Height;
+        }
+        _settings!.Save();
     }
 
     private void ShowWindow()

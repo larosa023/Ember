@@ -36,8 +36,8 @@
           </StackPanel>
         </Button>
       </StackPanel>
-      <TextBox Classes="search" Width="320" HorizontalAlignment="Left"
-               Watermark="Search name or PID" Text="{Binding Search}">
+      <TextBox x:Name="SearchBox" Classes="search" Width="320" HorizontalAlignment="Left"
+               Watermark="Search name or PID  (Ctrl+F)" Text="{Binding Search}">
         <TextBox.InnerLeftContent>
           <TextBlock Classes="icon" FontSize="13" Margin="10,0,2,0" Foreground="{DynamicResource TextMuted}" Text="&#xE721;" />
         </TextBox.InnerLeftContent>
@@ -168,7 +168,7 @@
         </StackPanel>
         <Border DockPanel.Dock="Top" Height="1" Background="{DynamicResource Stroke}" />
 
-        <ListBox Classes="rows" ItemsSource="{Binding Rows}" SelectedItem="{Binding Selected}">
+        <ListBox x:Name="ProcessList" Classes="rows" ItemsSource="{Binding Rows}" SelectedItem="{Binding Selected}">
           <ListBox.KeyBindings>
             <KeyBinding Gesture="Delete" Command="{Binding EndTaskCommand}" />
           </ListBox.KeyBindings>

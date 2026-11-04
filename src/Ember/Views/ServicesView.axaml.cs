@@ -6,7 +6,11 @@ namespace Ember.Views;
 
 public partial class ServicesView : UserControl
 {
-    public ServicesView() => InitializeComponent();
+    public ServicesView()
+    {
+        InitializeComponent();
+        SearchKeys.Attach(this, SearchBox);
+    }
 
     private void OnMenuOpening(object? sender, CancelEventArgs e)
     {

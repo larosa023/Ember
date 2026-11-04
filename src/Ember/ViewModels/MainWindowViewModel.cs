@@ -190,8 +190,32 @@ public partial class MainWindowViewModel : ViewModelBase
         };
     }
 
+    private static readonly string[] RestorablePages =
+        ["dashboard", "processes", "sensors", "history", "fans", "services", "system", "startup", "settings"];
+
+    /// <summary>Open the page that was showing last time Ember closed.</summary>
+    public void RestoreLastPage()
+    {
+        var page = _settings.Current.LastPage;
+        if (RestorablePages.Contains(page) && page != "dashboard") Navigate(page);
+    }
+
+    private string? PageKey(ViewModelBase page) => page switch
+    {
+        _ when page == Processes => "processes",
+        _ when page == Sensors => "sensors",
+        _ when page == History => "history",
+        _ when page == Fans => "fans",
+        _ when page == Services => "services",
+        _ when page == Specs => "system",
+        _ when page == Startup => "startup",
+        _ when page == Settings => "settings",
+        _ => "dashboard",
+    };
+
     partial void OnCurrentPageChanged(ViewModelBase value)
     {
+        _settings.Current.LastPage = PageKey(value) ?? "dashboard";
         // Only pay for process sampling while the Processes page is open.
         _host.SampleProcesses = value == Processes;
         if (value == Startup && Startup.Items.Count == 0) Startup.Refresh();

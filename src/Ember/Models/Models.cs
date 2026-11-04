@@ -82,6 +82,14 @@ public sealed class AppSettings
 
     public bool SidebarCollapsed { get; set; }
 
+    // Main window placement (physical pixels / DIPs) and last page, restored on launch.
+    public double? WindowX { get; set; }
+    public double? WindowY { get; set; }
+    public double? WindowWidth { get; set; }
+    public double? WindowHeight { get; set; }
+    public bool WindowMaximized { get; set; }
+    public string LastPage { get; set; } = "dashboard";
+
     // Mini overlay
     public bool OverlayVisible { get; set; }
     public bool OverlayLocked { get; set; }
