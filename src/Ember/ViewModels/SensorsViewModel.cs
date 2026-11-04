@@ -87,6 +87,7 @@ public partial class HardwareCard : ObservableObject
     private bool _isExpanded = true;
 
     [ObservableProperty] private string _countText = "";
+    [ObservableProperty] private bool _hasRows;   // false while a filter matches nothing on this device
 
     public string Chevron => IsExpanded ? "" : "";
 
@@ -113,7 +114,11 @@ public partial class HardwareCard : ObservableObject
         row.Apply(r);
     }
 
-    public void Refresh() => CountText = _rows.Count == 1 ? "1 sensor" : $"{_rows.Count} sensors";
+    public void Refresh()
+    {
+        CountText = _rows.Count == 1 ? "1 sensor" : $"{_rows.Count} sensors";
+        HasRows = _rows.Count > 0;
+    }
 
     /// <summary>Drop rows so a new filter can rebuild them.</summary>
     public void ClearRows()

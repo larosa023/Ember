@@ -229,10 +229,12 @@
 
             <!-- Section header: "Apps (5)" -->
             <DataTemplate DataType="vm:SectionRow" x:DataType="vm:SectionRow">
-              <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,10,0,2">
-                <TextBlock Classes="icon" FontSize="10" Foreground="{DynamicResource TextMuted}" Text="{Binding Chevron}" />
-                <TextBlock Classes="eyebrow" Text="{Binding Header}" VerticalAlignment="Center" />
-              </StackPanel>
+              <Button Classes="disclosure" Margin="0,8,0,0" Command="{Binding ToggleCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <TextBlock Classes="icon" FontSize="10" Foreground="{DynamicResource TextMuted}" Text="{Binding Chevron}" />
+                  <TextBlock Classes="eyebrow" Text="{Binding Header}" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
             </DataTemplate>
 
             <!-- App / process group -->

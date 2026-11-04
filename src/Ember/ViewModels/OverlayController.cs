@@ -138,8 +138,21 @@ public partial class OverlayController : ObservableObject
 
     private static string Join(string a, string? b) => b is null ? a : $"{a} · {b}";
 
+    private bool _syncing;
+
     partial void OnIsOpenChanged(bool value)
     {
+        // The Settings switch binds IsOpen directly, so a change from there has to open/close the window too.
+        if (!_syncing)
+        {
+            _syncing = true;
+            try
+            {
+                if (value && _window is null) Show();
+                else if (!value && _window is not null) Hide();
+            }
+            finally { _syncing = false; }
+        }
         _settings.Current.OverlayVisible = value;
         QueueSave();
     }

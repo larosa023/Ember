@@ -33,7 +33,15 @@ public partial class ServicesViewModel : ViewModelBase
     [ObservableProperty] private ServiceFilter _filter;
     [ObservableProperty] private string _summary = "Loading services…";
     [ObservableProperty] private string _status = "";
-    [ObservableProperty] private bool _isBusy;
+
+    // Action messages fade away on their own instead of sticking around forever.
+    partial void OnStatusChanged(string value)
+    {
+        if (value.Length > 0 && !value.EndsWith('…')) ClearAfter(() => Status = "");
+    }
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(StartCommand), nameof(StopCommand), nameof(RestartCommand))]
+    private bool _isBusy;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(StartCommand), nameof(StopCommand), nameof(RestartCommand))]
@@ -84,8 +92,10 @@ public partial class ServicesViewModel : ViewModelBase
                         r.Description.Contains(q, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
+        var keep = Selected;
         Items.Clear();
         foreach (var r in visible) Items.Add(r);
+        if (keep is not null && visible.Contains(keep)) Selected = keep;
     }
 
     private bool CanStart() => Selected is { IsRunning: false } && !IsBusy;

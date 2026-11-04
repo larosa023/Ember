@@ -14,6 +14,12 @@ public partial class SpecsViewModel : ViewModelBase
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string _status = "";
 
+    // Action messages fade away on their own instead of sticking around forever.
+    partial void OnStatusChanged(string value)
+    {
+        if (value.Length > 0 && !value.EndsWith('…')) ClearAfter(() => Status = "");
+    }
+
     public async Task LoadAsync()
     {
         if (IsLoading || Sections.Count > 0) return;

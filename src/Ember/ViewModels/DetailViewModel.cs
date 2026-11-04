@@ -129,6 +129,13 @@ public partial class DetailViewModel : ViewModelBase
 
     private void UpdateGpu(HardwareSnapshot s, List<SensorReading> r)
     {
+        // A different GPU (driver reset, switched primary GPU): drop the old card's sensor rows.
+        if (Name is { Length: > 0 } old && old != s.GpuName)
+        {
+            Groups.Clear();
+            _groups.Clear();
+            _rows.Clear();
+        }
         Name = s.GpuName;
         Headline = Format.Percent(s.GpuLoad);
 

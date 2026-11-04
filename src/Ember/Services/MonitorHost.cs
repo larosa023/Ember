@@ -13,6 +13,7 @@ public sealed class MonitorHost : IDisposable
     private readonly SensorService _sensors;
     private readonly ProcessService _processes;
     private readonly SystemInfoService _system = new();
+    private int _uiPending;
     private readonly CancellationTokenSource _cts = new();
     private volatile int _intervalMs = 1000;
     private volatile bool _sampleProcesses;
@@ -87,7 +88,15 @@ public sealed class MonitorHost : IDisposable
                 _processes.Reset();
             }
 
-            Dispatcher.UIThread.Post(() => Tick?.Invoke(snapshot, processes));
+            // Drop a frame rather than queue up snapshots if the UI is momentarily busy.
+            if (Interlocked.Exchange(ref _uiPending, 1) == 0)
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    Volatile.Write(ref _uiPending, 0);
+                    Tick?.Invoke(snapshot, processes);
+                });
+            }
 
             var elapsed = (int)Stopwatch.GetElapsedTime(started).TotalMilliseconds;
             try { await Task.Delay(Math.Max(50, _intervalMs - elapsed), token); }

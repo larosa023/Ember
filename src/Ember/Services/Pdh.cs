@@ -20,7 +20,12 @@ internal static class Pdh
             bool any = false;
             for (int i = 0; i < paths.Length; i++)
                 if (PdhAddEnglishCounter(query, paths[i], IntPtr.Zero, out counters[i]) == 0) any = true;
-            if (!any) return false;
+            if (!any)
+            {
+                PdhCloseQuery(query);
+                query = IntPtr.Zero;
+                return false;
+            }
             PdhCollectQueryData(query); // rate counters need a baseline sample
             return true;
         }

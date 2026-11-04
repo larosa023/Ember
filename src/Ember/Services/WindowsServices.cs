@@ -33,7 +33,8 @@ public static class WindowsServices
         using var searcher = new ManagementObjectSearcher(
             "SELECT Name, DisplayName, Description, State, StartMode, ProcessId, PathName FROM Win32_Service");
 
-        foreach (var o in searcher.Get())
+        using var results = searcher.Get();
+        foreach (var o in results)
         {
             using var s = (ManagementObject)o;
             var name = s["Name"]?.ToString() ?? "";

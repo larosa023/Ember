@@ -29,7 +29,7 @@ public sealed class HistoryService : IDisposable
     private readonly SettingsService _settings;
     private readonly List<HistorySample> _samples = new();
     private readonly object _gate = new();
-    private DateTime _last = DateTime.MinValue;
+    private long _lastTick;   // Stopwatch timestamp: immune to clock changes (e.g. daylight saving ending)
     private StreamWriter? _writer;
     private DateOnly _writerDay;
 
@@ -46,7 +46,9 @@ public sealed class HistoryService : IDisposable
                 var loaded = LoadRecentLogs();
                 lock (_gate)
                 {
-                    _samples.InsertRange(0, loaded.Where(x => _samples.Count == 0 || x.Time < _samples[0].Time));
+                    // Only add logged samples older than anything recorded since launch.
+                    var firstNew = _samples.Count == 0 ? DateTime.MaxValue : _samples[0].Time;
+                    _samples.InsertRange(0, loaded.Where(x => x.Time < firstNew).ToList());
                 }
             }
             catch
@@ -63,9 +65,10 @@ public sealed class HistoryService : IDisposable
 
     public void Record(HardwareSnapshot s)
     {
+        var tick = System.Diagnostics.Stopwatch.GetTimestamp();
+        if (_lastTick != 0 && System.Diagnostics.Stopwatch.GetElapsedTime(_lastTick, tick) < Interval) return;
+        _lastTick = tick;
         var now = DateTime.Now;
-        if (now - _last < Interval) return;
-        _last = now;
 
         var primary = s.Network.FirstOrDefault(n => n.IsPrimary);
         var sample = new HistorySample(now,

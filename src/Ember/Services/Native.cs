@@ -29,7 +29,7 @@ internal static class Native
         if (handle == IntPtr.Zero) return null;
         try
         {
-            var buffer = new StringBuilder(1024);
+            var buffer = new StringBuilder(32768);
             uint size = (uint)buffer.Capacity;
             return QueryFullProcessImageName(handle, 0, buffer, ref size) ? buffer.ToString() : null;
         }

@@ -69,10 +69,13 @@ public static class AutoStart
             </Task>
             """;
 
-        var file = Path.Combine(Path.GetTempPath(), "ember-task.xml");
+        // Random name, created fresh, so nothing else can swap the file before schtasks reads it.
+        var file = Path.Combine(Path.GetTempPath(), $"ember-task-{Guid.NewGuid():N}.xml");
         try
         {
-            File.WriteAllText(file, xml, Encoding.Unicode);
+            using (var stream = new FileStream(file, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            using (var writer = new StreamWriter(stream, Encoding.Unicode))
+                writer.Write(xml);
             return Schtasks($"/Create /TN \"{TaskName}\" /XML \"{file}\" /F") == 0;
         }
         finally
@@ -97,7 +100,19 @@ public static class AutoStart
     public static void RemoveAll()
     {
         try { SetRunKey(false); } catch { }
-        try { if (TaskExists) SetTask(false); } catch { }
+        try
+        {
+            if (!TaskExists || SetTask(false)) return;
+            // The task was created with admin rights, so removing it needs admin too (one UAC prompt).
+            using var p = Process.Start(new ProcessStartInfo("schtasks.exe", $"/Delete /TN \"{TaskName}\" /F")
+            {
+                UseShellExecute = true,
+                Verb = "runas",
+                WindowStyle = ProcessWindowStyle.Hidden,
+            });
+            p?.WaitForExit(15_000);
+        }
+        catch { /* UAC declined: the task just fails harmlessly at next sign-in */ }
     }
 
     private static int Schtasks(string args)

@@ -125,7 +125,7 @@ public partial class DashboardViewModel : ViewModelBase
         RamLoadText = Format.Percent(s.RamLoad);
         RamUsedText = s.RamUsedGb is float u ? $"{u:0.0} GB" : Format.Dash;
         RamFreeText = s.RamFreeGb is float f ? $"{f:0.0} GB" : Format.Dash;
-        RamTotalText = s.RamUsedGb is float u2 && s.RamFreeGb is float f2 ? $"{u2 + f2:0} GB" : Format.Dash;
+        RamTotalText = s.RamUsedGb is float u2 && s.RamFreeGb is float f2 ? $"{u2 + f2:0} GB installed" : "Memory";
         RamHistoryValues = _ramHistory.Push(s.RamLoad ?? 0);
 
         UpdateStorageAndNetwork(s);

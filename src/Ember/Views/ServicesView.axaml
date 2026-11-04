@@ -44,6 +44,10 @@
           </TextBox.InnerLeftContent>
         </TextBox>
         <ComboBox Width="180" ItemsSource="{Binding Filters}" SelectedItem="{Binding Filter}" VerticalAlignment="Center" />
+        <Button Classes="ghost" ToolTip.Tip="Reload the list" VerticalAlignment="Center"
+                IsEnabled="{Binding !IsBusy}" Command="{Binding RefreshCommand}">
+          <TextBlock Classes="icon" Text="&#xE72C;" />
+        </Button>
       </StackPanel>
     </DockPanel>
 

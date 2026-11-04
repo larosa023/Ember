@@ -39,6 +39,9 @@ internal sealed class ProcessTable : IDisposable
     [DllImport("ntdll.dll")]
     private static extern uint NtQuerySystemInformation(int infoClass, IntPtr buffer, int length, out int returnLength);
 
+    private List<RawProcess> _last = new();
+
+    /// <summary>The process table; on a (rare) failed read, the previous one so the list doesn't blink empty.</summary>
     public List<RawProcess> Read()
     {
         var list = new List<RawProcess>(400);
@@ -56,7 +59,7 @@ internal sealed class ProcessTable : IDisposable
                 _size = Math.Max(_size * 2, needed + 256 * 1024);
                 continue;
             }
-            if (status != 0) return list;
+            if (status != 0) return _last;
 
             long offset = 0;
             while (offset + OffThreads <= _size)
@@ -94,9 +97,9 @@ internal sealed class ProcessTable : IDisposable
                 if (next == 0) break;
                 offset += next;
             }
-            return list;
+            return _last = list;
         }
-        return list;
+        return _last;
     }
 
     public void Dispose()

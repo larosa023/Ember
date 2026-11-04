@@ -24,7 +24,12 @@ public sealed record Hotkey(uint Modifiers, uint VirtualKey, string Text)
         if (string.IsNullOrWhiteSpace(text)) return null;
         uint mods = 0;
         string? keyName = null;
-        foreach (var part in text.Split('+', StringSplitOptions.TrimEntries))
+        // A key that itself contains '+' ("Num+", or "+") has to be taken off the end before splitting.
+        text = text.Trim();
+        if (text.EndsWith("Num+", StringComparison.OrdinalIgnoreCase)) { keyName = "Num+"; text = text[..^4]; }
+        else if (text.EndsWith('+')) { keyName = "+"; text = text[..^1]; }
+
+        foreach (var part in text.Split('+', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
         {
             switch (part.ToLowerInvariant())
             {
@@ -32,7 +37,6 @@ public sealed record Hotkey(uint Modifiers, uint VirtualKey, string Text)
                 case "alt": mods |= Alt; break;
                 case "shift": mods |= Shift; break;
                 case "win": mods |= Win; break;
-                case "": keyName = "+"; break;
                 default: keyName = part; break;
             }
         }

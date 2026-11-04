@@ -44,9 +44,12 @@ internal sealed class NetworkMonitor : IDisposable
     private delegate void EventRecordCallback(IntPtr eventRecord);
 
     /// <summary>Start the session if possible (admin only). Safe to call repeatedly.</summary>
+    private DateTime _retryAfter = DateTime.MinValue;
+
     public void EnsureStarted()
     {
-        if (IsRunning || !Environment.IsPrivilegedProcess) return;
+        if (IsRunning || !Environment.IsPrivilegedProcess || DateTime.UtcNow < _retryAfter) return;
+        _retryAfter = DateTime.UtcNow.AddSeconds(60);   // if this attempt fails, don't retry every tick
         try
         {
             StopSessionByName();   // a session left behind by a crash would block ours

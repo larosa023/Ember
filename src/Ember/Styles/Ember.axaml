@@ -371,6 +371,13 @@
   <Style Selector="Border.pill.accent">
     <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
   </Style>
+  <Style Selector="Border.pill.bad">
+    <Setter Property="BorderBrush" Value="{DynamicResource Hot}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+  <Style Selector="Border.pill.bad TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Hot}" />
+  </Style>
   <Style Selector="Ellipse.dot">
     <Setter Property="Fill" Value="{DynamicResource Good}" />
   </Style>

@@ -34,9 +34,9 @@ public partial class ProcessesViewModel : ViewModelBase
     {
         _sections =
         [
-            new SectionRow(ProcessCategory.Apps, "Apps"),
-            new SectionRow(ProcessCategory.Background, "Background processes"),
-            new SectionRow(ProcessCategory.Windows, "Windows processes") { IsCollapsed = true },
+            new SectionRow(ProcessCategory.Apps, "Apps", Refresh),
+            new SectionRow(ProcessCategory.Background, "Background processes", Refresh),
+            new SectionRow(ProcessCategory.Windows, "Windows processes", Refresh) { IsCollapsed = true },
         ];
     }
 
@@ -47,6 +47,12 @@ public partial class ProcessesViewModel : ViewModelBase
     [ObservableProperty] private string _sortKey = "cpu";
     [ObservableProperty] private string _summary = "Loading…";
     [ObservableProperty] private string _status = "";
+
+    // Action messages fade away on their own instead of sticking around forever.
+    partial void OnStatusChanged(string value)
+    {
+        if (value.Length > 0 && !value.EndsWith('…')) ClearAfter(() => Status = "");
+    }
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(EndTaskCommand), nameof(EndTreeCommand), nameof(OpenLocationCommand))]
@@ -114,16 +120,9 @@ public partial class ProcessesViewModel : ViewModelBase
 
     partial void OnSelectedChanged(object? value)
     {
-        // Clicking a section header collapses/expands it instead of selecting it.
-        if (value is SectionRow section)
-        {
-            section.IsCollapsed = !section.IsCollapsed;
-            Dispatcher.UIThread.Post(() =>
-            {
-                Selected = null;
-                Refresh();
-            });
-        }
+        // Section headers aren't selectable (their button collapses/expands them).
+        if (value is SectionRow)
+            Dispatcher.UIThread.Post(() => Selected = null);
     }
 
     [RelayCommand]
@@ -224,7 +223,11 @@ public partial class ProcessesViewModel : ViewModelBase
             }
         }
 
+        // Moving rows can drop the ListBox selection, so put it back afterwards.
+        var selected = Selected;
         Sync(desired);
+        if (selected is not null && !ReferenceEquals(Selected, selected) && desired.Contains(selected))
+            Selected = selected;
 
         Summary = $"{apps} apps · {background} background · {windows} Windows · " +
                   $"{Math.Min(totalCpu, 100):0}% CPU · {Format.Bytes(totalMemory)} in use";
@@ -488,10 +491,20 @@ public partial class ProcessesViewModel : ViewModelBase
 /// <summary>Section header row ("Apps (5)"). Clicking it collapses or expands the section.</summary>
 public partial class SectionRow : ObservableObject
 {
-    public SectionRow(ProcessCategory category, string title)
+    private readonly Action _refresh;
+
+    public SectionRow(ProcessCategory category, string title, Action refresh)
     {
         Category = category;
         Title = title;
+        _refresh = refresh;
+    }
+
+    [RelayCommand]
+    private void Toggle()
+    {
+        IsCollapsed = !IsCollapsed;
+        _refresh();
     }
 
     public ProcessCategory Category { get; }

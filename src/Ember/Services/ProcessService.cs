@@ -106,10 +106,12 @@ public sealed class ProcessService : IDisposable
     /// <summary>Efficiency mode needs a handle per process, so it's re-checked every 5th sample only.</summary>
     private bool IsEfficient(int pid)
     {
-        if (_efficiency.TryGetValue(pid, out var cached) && _sampleCount - cached.Sample < 5)
+        var known = _efficiency.TryGetValue(pid, out var cached);
+        if (known && _sampleCount - cached.Sample < 5)
             return cached.On;
         var on = Native.IsEfficiencyMode(pid) == true;
-        _efficiency[pid] = (on, _sampleCount);
+        // First check: offset by pid so ~1/5 of processes are re-checked each sample, not all at once.
+        _efficiency[pid] = (on, known ? _sampleCount : _sampleCount - (pid / 4) % 5);
         return on;
     }
 

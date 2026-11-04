@@ -1,3 +1,6 @@
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
+
 namespace Ember.Services;
 
 /// <summary>Keeps one Ember running; a second launch signals the first to show its window.</summary>
@@ -40,7 +43,7 @@ public static class SingleInstance
 
     public static void ListenForShow(Action onShow)
     {
-        try { _show = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName); }
+        try { _show = CreateOpenEvent() ?? new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName); }
         catch { return; }
 
         var thread = new Thread(() =>
@@ -54,4 +57,43 @@ public static class SingleInstance
         { IsBackground = true, Name = "Ember single-instance listener" };
         thread.Start();
     }
+
+    /// <summary>
+    /// The "show yourself" event, created so that a normal (non-admin) launch can still signal it when
+    /// the running Ember is elevated: Everyone may modify it, and the low integrity label allows writes
+    /// from lower-integrity processes.
+    /// </summary>
+    private static EventWaitHandle? CreateOpenEvent()
+    {
+        if (!ConvertStringSecurityDescriptorToSecurityDescriptorW("D:(A;;0x1F0003;;;WD)S:(ML;;NW;;;LW)", 1, out var sd, IntPtr.Zero))
+            return null;
+        try
+        {
+            var sa = new SecurityAttributes { Length = Marshal.SizeOf<SecurityAttributes>(), SecurityDescriptor = sd };
+            var handle = CreateEventW(ref sa, false, false, ShowEventName);
+            if (handle.IsInvalid) return null;
+            return new EventWaitHandle(false, EventResetMode.AutoReset) { SafeWaitHandle = handle };
+        }
+        finally
+        {
+            LocalFree(sd);
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct SecurityAttributes
+    {
+        public int Length;
+        public IntPtr SecurityDescriptor;
+        public int InheritHandle;
+    }
+
+    [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool ConvertStringSecurityDescriptorToSecurityDescriptorW(string sddl, uint revision, out IntPtr descriptor, IntPtr size);
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern SafeWaitHandle CreateEventW(ref SecurityAttributes attributes, bool manualReset, bool initialState, string name);
+
+    [DllImport("kernel32.dll")]
+    private static extern IntPtr LocalFree(IntPtr memory);
 }

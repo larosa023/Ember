@@ -40,6 +40,17 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             _desktop = desktop;
+
+            // Ember runs for days in the tray: one bad tick should be logged, not close the app.
+            // (The smoke test installs its own handler that fails the run instead.)
+            if (!Program.SmokeTest)
+            {
+                Dispatcher.UIThread.UnhandledException += (_, e) =>
+                {
+                    CrashLog.Write(e.Exception);
+                    e.Handled = true;
+                };
+            }
             // Hiding the window to the tray must not end the app; we quit explicitly.
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
@@ -188,6 +199,11 @@ public partial class App : Application
 
         window.PropertyChanged += (_, e) =>
         {
+            if (e.Property == Visual.IsVisibleProperty)
+            {
+                _vm?.SetWindowVisible(window.IsVisible);
+                return;
+            }
             if (e.Property != Window.WindowStateProperty) return;
             if (window.WindowState == WindowState.Minimized)
             {

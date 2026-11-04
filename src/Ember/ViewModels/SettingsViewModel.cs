@@ -235,6 +235,12 @@ public partial class SettingsViewModel : ViewModelBase
         return true;
     }
 
+    /// <summary>Leaving the Settings page stops waiting for a shortcut.</summary>
+    public void CancelCapture()
+    {
+        if (Capturing is { } row) EndCapture(row);
+    }
+
     private void EndCapture(HotkeyRow row)
     {
         row.IsCapturing = false;
@@ -354,16 +360,34 @@ public partial class SettingsViewModel : ViewModelBase
         _settings.Save();
     }
 
+    // Sliders fire on every pixel of a drag: write the settings file once the drag settles.
+    private DispatcherTimer? _sliderSave;
+
+    private void SaveSoon()
+    {
+        if (_sliderSave is null)
+        {
+            _sliderSave = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
+            _sliderSave.Tick += (_, _) =>
+            {
+                _sliderSave.Stop();
+                _settings.Save();
+            };
+        }
+        _sliderSave.Stop();
+        _sliderSave.Start();
+    }
+
     partial void OnCpuAlertChanged(double value)
     {
         _settings.Current.CpuAlertC = Math.Round(value);
-        _settings.Save();
+        SaveSoon();
     }
 
     partial void OnGpuAlertChanged(double value)
     {
         _settings.Current.GpuAlertC = Math.Round(value);
-        _settings.Save();
+        SaveSoon();
     }
 
     [RelayCommand]
@@ -586,7 +610,9 @@ public partial class SettingsViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(UpdateReady))]
     private void InstallUpdate()
     {
-        if (_pending is not null) _updates.ApplyAndRestart(_pending);
+        if (_pending is null) return;
+        _host.Dispose();   // hand fans back to BIOS and stop tracing before the updater restarts Ember
+        _updates.ApplyAndRestart(_pending);
     }
 }
 

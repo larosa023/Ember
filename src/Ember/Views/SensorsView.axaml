@@ -32,7 +32,7 @@
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="vm:HardwareCard">
-            <Border Classes="card" Padding="18,14">
+            <Border Classes="card" Padding="18,14" IsVisible="{Binding HasRows}">
               <StackPanel Spacing="10">
 
                 <!-- Card header: click anywhere to collapse -->

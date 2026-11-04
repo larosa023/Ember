@@ -107,7 +107,7 @@
                 <TextBlock DockPanel.Dock="Right" Classes="icon open" FontSize="12" Text="&#xE76C;" />
                 <TextBlock Classes="eyebrow" Text="MEMORY" />
               </DockPanel>
-              <TextBlock Classes="h2" Text="{Binding RamTotalText, StringFormat='{}{0} installed'}" />
+              <TextBlock Classes="h2" Text="{Binding RamTotalText}" />
             </StackPanel>
 
             <Grid Width="168" Height="168" HorizontalAlignment="Center">

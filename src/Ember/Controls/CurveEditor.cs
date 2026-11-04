@@ -220,6 +220,7 @@ public class CurveEditor : Control
             var order = sorted.IndexOf(point);
             var lo = order > 0 ? sorted[order - 1].Temp + 1 : MinTemp;
             var hi = order < sorted.Count - 1 ? sorted[order + 1].Temp - 1 : MaxTemp;
+            if (lo > hi) hi = lo;   // neighbours only 1° apart: Math.Clamp would throw
 
             point.Temp = Math.Round(Math.Clamp(TempAt(pos.X), lo, hi));
             point.Percent = Math.Round(Math.Clamp(PercentAt(pos.Y), 0, 100));

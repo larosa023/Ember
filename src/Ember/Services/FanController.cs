@@ -38,11 +38,15 @@ public sealed class FanController
         lock (_gate) _configs = copy;
     }
 
+    private bool _stopped;   // set once fans are handed back for good (exit, update, crash)
+    private long _tick;
+
     public List<FanChannel> Update(IEnumerable<IHardware> hardware, IReadOnlyDictionary<string, float?> temps)
     {
         var channels = new List<FanChannel>();
         lock (_gate)
         {
+            _tick++;
             foreach (var hw in hardware) Visit(hw, temps, channels);
         }
         return channels;
@@ -73,6 +77,7 @@ public sealed class FanController
 
     private void Drive(string id, ISensor sensor, IReadOnlyDictionary<string, float?> temps)
     {
+        if (_stopped) return;
         var control = sensor.Control!;
         _configs.TryGetValue(id, out var config);
 
@@ -94,7 +99,8 @@ public sealed class FanController
             next = target > last ? Math.Min(target, last + MaxStepUp) : Math.Max(target, last - MaxStepDown);
         }
 
-        if (!_applied.TryGetValue(id, out var previous) || Math.Abs(previous - next) >= 0.5)
+        // Re-send every 30 ticks too, in case firmware or the GPU driver took control back (e.g. after sleep).
+        if (!_applied.TryGetValue(id, out var previous) || Math.Abs(previous - next) >= 0.5 || _tick % 30 == 0)
             control.SetSoftware((float)next);
         _applied[id] = next;
     }
@@ -128,6 +134,7 @@ public sealed class FanController
     {
         lock (_gate)
         {
+            _stopped = true;
             foreach (var id in _applied.Keys.ToList())
             {
                 try { if (_controls.TryGetValue(id, out var s)) s.Control?.SetDefault(); } catch { }

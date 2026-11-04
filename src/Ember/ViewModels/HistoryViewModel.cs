@@ -48,6 +48,12 @@ public partial class HistoryViewModel : ViewModelBase
     [ObservableProperty] private bool _isEmpty = true;
     [ObservableProperty] private string _status = "";
 
+    // Action messages fade away on their own instead of sticking around forever.
+    partial void OnStatusChanged(string value)
+    {
+        if (value.Length > 0 && !value.EndsWith('…')) ClearAfter(() => Status = "");
+    }
+
     partial void OnSelectedRangeChanged(RangeOption value) => Refresh();
 
     /// <summary>Rebuild when new samples arrived (called every tick while the page is open).</summary>

@@ -14,14 +14,16 @@ public partial class StartupViewModel : ViewModelBase
     [ObservableProperty] private string _status = "";
 
     [RelayCommand]
-    public void Refresh()
+    public async Task Refresh()
     {
-        Items.Clear();
         try
         {
-            foreach (var entry in StartupService.Load())
+            // Reading the registry, startup folders and shortcut targets can take a moment: do it off the UI thread.
+            var entries = await Task.Run(StartupService.Load);
+            Items.Clear();
+            foreach (var entry in entries)
                 Items.Add(new StartupRow(entry, Toggle));
-            Status = $"{Items.Count} startup apps · {Items.Count(i => i.IsEnabled)} enabled";
+            Status = SummaryText();
         }
         catch (Exception ex)
         {
@@ -29,8 +31,12 @@ public partial class StartupViewModel : ViewModelBase
         }
     }
 
+    private string SummaryText() => $"{Items.Count} startup apps · {Items.Count(i => i.IsEnabled)} enabled";
+
     private bool Toggle(StartupEntry entry, bool enabled)
     {
+        // After a change message, go back to the counts.
+        ClearAfter(() => Status = SummaryText());
         try
         {
             StartupService.SetEnabled(entry, enabled);

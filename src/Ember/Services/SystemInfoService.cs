@@ -58,7 +58,8 @@ public sealed class SystemInfoService
         using (var searcher = new ManagementObjectSearcher(ns,
                    "SELECT DeviceId, FriendlyName, MediaType, BusType, Size, HealthStatus FROM MSFT_PhysicalDisk"))
         {
-            foreach (var o in searcher.Get())
+            using var results = searcher.Get();
+            foreach (var o in results)
             {
                 using var d = (ManagementObject)o;
                 if (!int.TryParse(d["DeviceId"]?.ToString(), out var index)) continue;
@@ -88,7 +89,8 @@ public sealed class SystemInfoService
         var map = new Dictionary<char, int>();
         using (var searcher = new ManagementObjectSearcher(ns, "SELECT DiskNumber, DriveLetter FROM MSFT_Partition"))
         {
-            foreach (var o in searcher.Get())
+            using var results = searcher.Get();
+            foreach (var o in results)
             {
                 using var p = (ManagementObject)o;
                 var letter = p["DriveLetter"] switch

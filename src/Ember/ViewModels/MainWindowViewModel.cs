@@ -223,12 +223,21 @@ public partial class MainWindowViewModel : ViewModelBase
         _ => "dashboard",
     };
 
+    private bool _windowVisible = true;
+
+    /// <summary>Called when the window is hidden to the tray or shown again: no process sampling while hidden.</summary>
+    public void SetWindowVisible(bool visible)
+    {
+        _windowVisible = visible;
+        _host.SampleProcesses = visible && CurrentPage == Processes;
+    }
+
     partial void OnCurrentPageChanged(ViewModelBase value)
     {
         _settings.Current.LastPage = PageKey(value) ?? "dashboard";
         // Only pay for process sampling while the Processes page is open.
-        _host.SampleProcesses = value == Processes;
-        if (value == Startup && Startup.Items.Count == 0) Startup.Refresh();
+        _host.SampleProcesses = value == Processes && _windowVisible;
+        if (value == Startup && Startup.Items.Count == 0) _ = Startup.Refresh();
         if (value == History) History.Refresh();
         if (value == Services && Services.Items.Count == 0) _ = Services.Refresh();
         if (value == Specs) _ = Specs.LoadAsync();

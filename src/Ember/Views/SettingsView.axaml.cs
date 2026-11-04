@@ -17,5 +17,7 @@ public partial class SettingsView : UserControl
             if (DataContext is SettingsViewModel vm && vm.CaptureKey(e.Key, e.KeyModifiers))
                 e.Handled = true;
         }, RoutingStrategies.Tunnel);
+
+        DetachedFromVisualTree += (_, _) => (DataContext as SettingsViewModel)?.CancelCapture();
     }
 }

@@ -44,6 +44,13 @@ public partial class StorageViewModel : ViewModelBase
 
         // Volumes we couldn't tie to a disk (Storage WMI unavailable, virtual disks, ...).
         var known = s.Disks.Select(d => d.Index).ToHashSet();
+
+        // Drives that were unplugged.
+        foreach (var gone in _cards.Keys.Where(k => !known.Contains(k)).ToList())
+        {
+            Disks.Remove(_cards[gone]);
+            _cards.Remove(gone);
+        }
         var others = s.Volumes.Where(v => v.DiskIndex is not int i || !known.Contains(i)).ToList();
         Sync(OtherVolumes, _otherRows, others);
         HasOtherVolumes = OtherVolumes.Count > 0;
