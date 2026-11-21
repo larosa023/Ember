@@ -187,7 +187,7 @@ public partial class SensorRow : ObservableObject
     [ObservableProperty] private string _min = Format.Dash;
     [ObservableProperty] private string _max = Format.Dash;
 
-    private float? _v, _min, _max;
+    private float? _lastValue, _lastMin, _lastMax;
     private bool _formatted;
     private (bool, string, string, string) _units;
 
@@ -197,9 +197,9 @@ public partial class SensorRow : ObservableObject
         var units = (Format.UseFahrenheit, Format.NetUnit, Format.DiskUnit, Format.MemoryUnit);
         var unitChanged = units != _units;
         _units = units;
-        if (!_formatted || unitChanged || r.Value != _v) Value = Format.Sensor(r.Type, _v = r.Value);
-        if (!_formatted || unitChanged || r.Min != _min) Min = Format.Sensor(r.Type, _min = r.Min);
-        if (!_formatted || unitChanged || r.Max != _max) Max = Format.Sensor(r.Type, _max = r.Max);
+        if (!_formatted || unitChanged || r.Value != _lastValue) Value = Format.Sensor(r.Type, _lastValue = r.Value);
+        if (!_formatted || unitChanged || r.Min != _lastMin) Min = Format.Sensor(r.Type, _lastMin = r.Min);
+        if (!_formatted || unitChanged || r.Max != _lastMax) Max = Format.Sensor(r.Type, _lastMax = r.Max);
         _formatted = true;
     }
 }

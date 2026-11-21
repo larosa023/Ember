@@ -199,7 +199,14 @@ public partial class MainWindowViewModel : ViewModelBase
         yield return () => Overlay.ToggleLock();
         yield return () => Overlay.ToggleLock();
         yield return () => Overlay.Toggle();   // and close it
+        // Dashboard with top apps for a few ticks, and every live tray icon style.
         yield return () => Navigate("dashboard");
+        foreach (var mode in Settings.TrayIconModes.Reverse())
+            yield return () => Settings.SelectedTrayIcon = mode;
+        for (int i = 0; i < 3; i++) yield return () => { };
+        yield return () => Settings.DashboardTopApps = false;
+        yield return () => Settings.DashboardTopApps = true;
+        yield return () => Dashboard.PowerPlan.Refresh();
     }
 
     [RelayCommand]
