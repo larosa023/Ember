@@ -36,6 +36,7 @@ public static class GpuPower
             {
                 _hooked = true;
                 AppDomain.CurrentDomain.ProcessExit += (_, _) => RestoreAll();
+                AppDomain.CurrentDomain.UnhandledException += (_, _) => RestoreAll();
             }
         }
         return null;

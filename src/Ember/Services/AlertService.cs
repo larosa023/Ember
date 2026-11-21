@@ -75,8 +75,9 @@ public sealed class AlertService
                 continue;
             }
             if (free > freePercent) continue;
-            var first = !_diskAlerted.ContainsKey(v.Letter);
-            if (!first && !_diskArmed.Contains(v.Letter)) continue;
+            // Only alerts when a drive *drops* below the limit while Ember runs, so a backup drive that
+            // is always full doesn't pop up after every boot.
+            if (!_diskArmed.Contains(v.Letter)) continue;
             _diskArmed.Remove(v.Letter);
             _diskAlerted[v.Letter] = DateTime.UtcNow;
             Show($"Drive {v.Letter} is nearly full",

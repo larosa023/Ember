@@ -133,7 +133,7 @@ public partial class DetailViewModel : ViewModelBase
         // Core clocks by core number, built once per tick (was a search per core).
         var clocks = new Dictionary<int, float?>();
         foreach (var x in r)
-            if (x.Type == SensorType.Clock && x.Name.StartsWith("Core #", StringComparison.Ordinal))
+            if (x.Type == SensorType.Clock && x.Name.Contains("Core #", StringComparison.Ordinal))   // "Core #3" (AMD) or "CPU Core #3" (Intel)
                 clocks[CoreNumber(x.Name)] = x.Value;
 
         foreach (var load in coreLoads)

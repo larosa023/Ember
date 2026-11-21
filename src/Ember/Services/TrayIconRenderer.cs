@@ -19,6 +19,10 @@ public sealed class TrayIconRenderer
     private string? _lastText;
     private Color _lastColor;
 
+    // Every number is drawn once per accent color and reused (at most ~1000 tiny icons), so a
+    // tray app running for weeks never keeps creating new bitmaps.
+    private readonly Dictionary<(string Text, Color Color), WindowIcon> _cache = new();
+
     public WindowIcon Logo => _logo ??= new WindowIcon(AssetLoader.Open(new Uri("avares://Ember/Assets/ember.ico")));
 
     /// <summary>The icon to show now, or null when nothing changed since last time.</summary>
@@ -36,7 +40,13 @@ public sealed class TrayIconRenderer
         if (text == _lastText && color == _lastColor) return null;
         _lastText = text;
         _lastColor = color;
-        return text is null ? Logo : Draw(text, color);
+        if (text is null) return Logo;
+        if (!_cache.TryGetValue((text, color), out var icon))
+        {
+            if (_cache.Count > 1200) _cache.Clear();
+            _cache[(text, color)] = icon = Draw(text, color);
+        }
+        return icon;
     }
 
     /// <summary>Forget the last drawn value so the next tick redraws (theme or mode changed).</summary>
@@ -52,7 +62,7 @@ public sealed class TrayIconRenderer
 
     private static WindowIcon Draw(string text, Color accent)
     {
-        var bitmap = new RenderTargetBitmap(new PixelSize(Size, Size), new Vector(96, 96));
+        using var bitmap = new RenderTargetBitmap(new PixelSize(Size, Size), new Vector(96, 96));
         using (var ctx = bitmap.CreateDrawingContext())
         {
             ctx.DrawRectangle(new SolidColorBrush(accent), null, new RoundedRect(new Rect(0, 0, Size, Size), 7));
@@ -64,6 +74,10 @@ public sealed class TrayIconRenderer
                 white ? Brushes.White : Brushes.Black);
             ctx.DrawText(formatted, new Point((Size - formatted.Width) / 2, (Size - formatted.Height) / 2));
         }
-        return new WindowIcon(bitmap);
+        // WindowIcon keeps its own copy (it saves the image), so the bitmap can be freed right away.
+        using var png = new MemoryStream();
+        bitmap.Save(png);
+        png.Position = 0;
+        return new WindowIcon(png);
     }
 }

@@ -178,6 +178,7 @@ public partial class App : Application
     {
         if (_quitting) return;
         _quitting = true;
+        try { GpuPower.RestoreAll(); } catch { }
         _desktop?.Shutdown();
     }
 
@@ -332,7 +333,11 @@ public partial class App : Application
                     ToggleType = NativeMenuItemToggleType.Radio,
                     IsChecked = plan.Id == active,
                 };
-                entry.Click += (_, _) => PowerPlans.SetActive(plan.Id);
+                entry.Click += (_, _) =>
+                {
+                    PowerPlans.SetActive(plan.Id);
+                    Rebuild();
+                };
                 sub.Items.Add(entry);
             }
             if (sub.Items.Count == 0) sub.Items.Add(new NativeMenuItem("Not available") { IsEnabled = false });
@@ -373,6 +378,8 @@ public partial class App : Application
 
         // Each tooltip change is a call into Explorer: every 3rd tick is plenty.
         if (_trayTick++ % 3 != 0) return;
+        // Keep the dashboard's power plan picker in step with changes made elsewhere (tray, Windows Settings).
+        if (_trayTick % 15 == 1) _vm?.Dashboard.PowerPlan.Refresh();
         // Windows caps tray tooltips at ~127 characters.
         var text = $"Ember\nCPU {Format.Percent(s.CpuLoad)} · {Format.Temp(s.CpuTemp)}\nGPU {Format.Percent(s.GpuLoad)} · {Format.Temp(s.GpuTemp)}";
         _tray.ToolTipText = text.Length > 127 ? text[..127] : text;
