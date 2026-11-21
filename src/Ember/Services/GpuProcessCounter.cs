@@ -21,16 +21,16 @@ internal sealed class GpuProcessCounter : IDisposable
         }
         if (!_available || !Pdh.Collect(_query)) return result;
 
-        var items = Pdh.ReadArray(_counters[0]);
-        if (items is null) return result;
-
         // Instance names look like: pid_1234_luid_0x0_0x1A2B_phys_0_eng_3_engtype_3D
-        var perEngine = new Dictionary<(int Pid, string Engine), double>();
-        foreach (var (instance, value) in items)
-        {
-            if (value <= 0 || !TryParse(instance, out var pid, out var engine)) continue;
-            perEngine[(pid, engine)] = perEngine.GetValueOrDefault((pid, engine)) + value;
-        }
+        // Parsed straight from PDH's buffer: no strings are created for the thousands of engine instances.
+        var perEngine = _perEngine;
+        perEngine.Clear();
+        if (!Pdh.ForEachPositive(_counters[0], ref _buffer, ref _capacity, (instance, value) =>
+            {
+                if (!TryParse(instance, out var pid, out var engine)) return;
+                perEngine[(pid, engine)] = perEngine.GetValueOrDefault((pid, engine)) + value;
+            }))
+            return result;
 
         foreach (var ((pid, _), value) in perEngine)
             result[pid] = Math.Min(100, Math.Max(result.GetValueOrDefault(pid), value));
@@ -38,19 +38,32 @@ internal sealed class GpuProcessCounter : IDisposable
         return result;
     }
 
-    private static bool TryParse(string instance, out int pid, out string engine)
+    private readonly Dictionary<(int Pid, int Engine), double> _perEngine = new();
+    private IntPtr _buffer;
+    private int _capacity;
+
+    private static bool TryParse(ReadOnlySpan<char> instance, out int pid, out int engine)
     {
         pid = 0;
-        engine = "";
-        if (!instance.StartsWith("pid_", StringComparison.Ordinal)) return false;
+        engine = 0;
+        if (!instance.StartsWith("pid_")) return false;
 
-        var end = instance.IndexOf('_', 4);
-        if (end < 0 || !int.TryParse(instance.AsSpan(4, end - 4), out pid)) return false;
+        var rest = instance[4..];
+        var end = rest.IndexOf('_');
+        if (end < 0 || !int.TryParse(rest[..end], out pid)) return false;
 
-        var e = instance.LastIndexOf("engtype_", StringComparison.Ordinal);
-        engine = e >= 0 ? instance[(e + 8)..] : "";
+        var e = instance.LastIndexOf("engtype_");
+        engine = e >= 0 ? string.GetHashCode(instance[(e + 8)..]) : 0;
         return true;
     }
 
-    public void Dispose() => Pdh.Close(ref _query);
+    public void Dispose()
+    {
+        Pdh.Close(ref _query);
+        if (_buffer != IntPtr.Zero)
+        {
+            System.Runtime.InteropServices.Marshal.FreeHGlobal(_buffer);
+            _buffer = IntPtr.Zero;
+        }
+    }
 }

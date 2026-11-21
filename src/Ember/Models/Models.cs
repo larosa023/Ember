@@ -120,6 +120,22 @@ public sealed class AppSettings
     // History
     public bool HistoryToDisk { get; set; } = true;
     public int HistoryDays { get; set; } = 7;
+
+    // GPU power limit (NVIDIA): re-applied at launch while Ember runs as admin; null = driver default
+    public double? GpuPowerLimitW { get; set; }
+    public string? GpuPowerLimitGpu { get; set; }
+
+    // Extra alerts
+    public bool RamAlertEnabled { get; set; }
+    public double RamAlertPercent { get; set; } = 90;
+    public bool DiskAlertEnabled { get; set; } = true;
+    public double DiskAlertFreePercent { get; set; } = 5;
+
+    /// <summary>What the tray icon shows: "logo", "cpu-temp", "gpu-temp", "cpu-load".</summary>
+    public string TrayIconMode { get; set; } = "logo";
+
+    /// <summary>Show the top apps card on the dashboard (samples processes while the dashboard is open).</summary>
+    public bool DashboardTopApps { get; set; } = true;
 }
 
 /// <summary>A color theme. Built-ins live in ThemeService; users can drop JSON files in %AppData%\Ember\themes.</summary>

@@ -45,6 +45,13 @@ public partial class DetailViewModel : ViewModelBase
     }
 
     public DetailKind Kind { get; }
+
+    /// <summary>GPU page only: power limit card (hidden unless an NVIDIA card allows it).</summary>
+    public GpuTuningViewModel? Tuning { get; init; }
+
+    /// <summary>Memory page only: clear standby memory.</summary>
+    public MemoryCleanupViewModel? Cleanup { get; init; }
+
     public string Title { get; }
     public bool ShowCores => Kind == DetailKind.Cpu;
     public string GraphLabel => Kind == DetailKind.Memory ? "Memory in use · last 2 minutes" : "Usage · last 2 minutes";
@@ -65,7 +72,13 @@ public partial class DetailViewModel : ViewModelBase
     /// Keeps the 2-minute history every tick (so the graph is full when the page opens);
     /// everything else is only rebuilt while the page is on screen.
     /// </summary>
-    public void Update(HardwareSnapshot s, bool visible)
+    public void Update(HardwareSnapshot s, bool visible, bool record = true)
+    {
+        if (record) Record(s);
+        if (visible) Publish(s);
+    }
+
+    private void Record(HardwareSnapshot s)
     {
         double main = Kind switch
         {
@@ -75,7 +88,10 @@ public partial class DetailViewModel : ViewModelBase
         };
         Array.Copy(_buffer, 1, _buffer, 0, HistoryLength - 1);
         _buffer[^1] = main;
-        if (!visible) return;
+    }
+
+    private void Publish(HardwareSnapshot s)
+    {
         History = (double[])_buffer.Clone();
 
         var readings = Kind switch
@@ -94,6 +110,7 @@ public partial class DetailViewModel : ViewModelBase
         }
 
         UpdateGroups(readings);
+        Cleanup?.Update();
     }
 
     private void UpdateCpu(HardwareSnapshot s, List<SensorReading> r)
@@ -103,7 +120,8 @@ public partial class DetailViewModel : ViewModelBase
 
         var coreLoads = r.Where(x => x.Type == SensorType.Load &&
                                      x.Name.StartsWith("CPU Core #", StringComparison.OrdinalIgnoreCase)).ToList();
-        var physical = coreLoads.Select(x => CoreNumber(x.Name)).Where(n => n > 0).Distinct().Count();
+        var physical = coreLoads.Select(x => _cores.TryGetValue(x.Id, out var t) ? t.Core : CoreNumber(x.Name))
+                                .Where(n => n > 0).Distinct().Count();
 
         Stat("temp", "Temperature", Format.Temp(s.CpuTemp));
         Stat("clock", "Average clock", Format.Clock(s.CpuClock));
@@ -112,17 +130,21 @@ public partial class DetailViewModel : ViewModelBase
         Stat("cores", "Cores / threads", physical > 0 ? $"{physical} / {coreLoads.Count}" : Format.Dash);
         Stat("uptime", "Uptime", Format.Uptime(TimeSpan.FromMilliseconds(Environment.TickCount64)));
 
+        // Core clocks by core number, built once per tick (was a search per core).
+        var clocks = new Dictionary<int, float?>();
+        foreach (var x in r)
+            if (x.Type == SensorType.Clock && x.Name.StartsWith("Core #", StringComparison.Ordinal))
+                clocks[CoreNumber(x.Name)] = x.Value;
+
         foreach (var load in coreLoads)
         {
             if (!_cores.TryGetValue(load.Id, out var tile))
             {
-                tile = new CoreTile(ShortCoreName(load.Name));
+                tile = new CoreTile(ShortCoreName(load.Name), CoreNumber(load.Name));
                 _cores[load.Id] = tile;
                 Cores.Add(tile);
             }
-            var core = CoreNumber(load.Name);
-            var clock = r.FirstOrDefault(x => x.Type == SensorType.Clock && x.Name == $"Core #{core}");
-            tile.Apply(load.Value, clock?.Value);
+            tile.Apply(load.Value, clocks.GetValueOrDefault(tile.Core));
         }
         CoresSummary = coreLoads.Count > 0 ? $"{coreLoads.Count} logical processors" : "Per-core data needs admin and the sensor driver.";
     }
@@ -244,10 +266,15 @@ public partial class DetailViewModel : ViewModelBase
         r.Where(x => x.Type == type && x.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
          .Select(x => x.Value).Max();
 
+    /// <summary>"CPU Core #12 Thread #2" → 12 (no regex: this runs for every core sensor each tick).</summary>
     private static int CoreNumber(string name)
     {
-        var m = Regex.Match(name, @"Core #(\d+)");
-        return m.Success ? int.Parse(m.Groups[1].Value) : 0;
+        var i = name.IndexOf("Core #", StringComparison.Ordinal);
+        if (i < 0) return 0;
+        var span = name.AsSpan(i + 6);
+        int n = 0, len = 0;
+        while (len < span.Length && char.IsAsciiDigit(span[len])) n = n * 10 + (span[len++] - '0');
+        return len > 0 ? n : 0;
     }
 
     /// <summary>"CPU Core #3 Thread #2" → "Core 3 · T2", "CPU Core #3" → "Core 3".</summary>
@@ -268,8 +295,14 @@ public partial class StatTile : ObservableObject
 
 public partial class CoreTile : ObservableObject
 {
-    public CoreTile(string name) => Name = name;
+    public CoreTile(string name, int core)
+    {
+        Name = name;
+        Core = core;
+    }
+
     public string Name { get; }
+    public int Core { get; }
 
     [ObservableProperty] private double _load;
     [ObservableProperty] private string _loadText = Format.Dash;

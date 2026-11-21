@@ -59,6 +59,12 @@ public partial class SettingsViewModel : ViewModelBase
         _selectedMemoryUnit = Pick(MemoryUnits, settings.Current.MemoryUnit);
         _selectedNetUnit = Pick(NetUnits, settings.Current.NetUnit);
         _selectedDiskUnit = Pick(DiskUnits, settings.Current.DiskUnit);
+        _ramAlertEnabled = settings.Current.RamAlertEnabled;
+        _ramAlert = settings.Current.RamAlertPercent;
+        _diskAlertEnabled = settings.Current.DiskAlertEnabled;
+        _diskAlert = settings.Current.DiskAlertFreePercent;
+        _selectedTrayIcon = Pick(TrayIconModes, settings.Current.TrayIconMode);
+        _dashboardTopApps = settings.Current.DashboardTopApps;
         _selectedRetention = RetentionOptions.FirstOrDefault(o => o.Days == settings.Current.HistoryDays) ?? RetentionOptions[1];
         _themes = themes;
         _updates = updates;
@@ -392,6 +398,71 @@ public partial class SettingsViewModel : ViewModelBase
 
     [RelayCommand]
     private void SendTestAlert() => _alerts.ShowTest();
+
+    // ---------- More alerts ----------
+
+    [ObservableProperty] private bool _ramAlertEnabled;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(RamAlertText))] private double _ramAlert;
+    [ObservableProperty] private bool _diskAlertEnabled;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(DiskAlertText))] private double _diskAlert;
+
+    public string RamAlertText => $"{RamAlert:0}%";
+    public string DiskAlertText => $"{DiskAlert:0}%";
+
+    partial void OnRamAlertEnabledChanged(bool value)
+    {
+        _settings.Current.RamAlertEnabled = value;
+        _settings.Save();
+    }
+
+    partial void OnRamAlertChanged(double value)
+    {
+        _settings.Current.RamAlertPercent = Math.Round(value);
+        SaveSoon();
+    }
+
+    partial void OnDiskAlertEnabledChanged(bool value)
+    {
+        _settings.Current.DiskAlertEnabled = value;
+        _settings.Save();
+    }
+
+    partial void OnDiskAlertChanged(double value)
+    {
+        _settings.Current.DiskAlertFreePercent = Math.Round(value);
+        SaveSoon();
+    }
+
+    // ---------- Tray icon & dashboard ----------
+
+    public IReadOnlyList<UnitOption> TrayIconModes { get; } =
+    [
+        new("logo", "Ember logo"),
+        new("cpu-temp", "CPU temperature"),
+        new("gpu-temp", "GPU temperature"),
+        new("cpu-load", "CPU usage"),
+    ];
+
+    [ObservableProperty] private UnitOption _selectedTrayIcon;
+    [ObservableProperty] private bool _dashboardTopApps;
+
+    /// <summary>Raised when the tray icon mode or dashboard top apps setting changes.</summary>
+    public event Action? DisplayOptionsChanged;
+
+    partial void OnSelectedTrayIconChanged(UnitOption value)
+    {
+        if (value is null) return;
+        _settings.Current.TrayIconMode = value.Key;
+        _settings.Save();
+        DisplayOptionsChanged?.Invoke();
+    }
+
+    partial void OnDashboardTopAppsChanged(bool value)
+    {
+        _settings.Current.DashboardTopApps = value;
+        _settings.Save();
+        DisplayOptionsChanged?.Invoke();
+    }
 
     // ---------- History ----------
 

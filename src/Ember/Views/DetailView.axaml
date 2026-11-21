@@ -53,6 +53,50 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
 
+      <!-- GPU power limit (NVIDIA only) -->
+      <Border Classes="card" IsVisible="{Binding Tuning.IsAvailable, FallbackValue=False}">
+        <StackPanel Spacing="12" DataContext="{Binding Tuning}" x:DataType="vm:GpuTuningViewModel">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Right" Classes="label" Text="{Binding CurrentText}" VerticalAlignment="Center" />
+            <TextBlock Classes="eyebrow" Text="POWER LIMIT" />
+          </DockPanel>
+          <TextBlock Classes="label" TextWrapping="Wrap"
+                     Text="Lower it to cut heat, noise and power draw for a small loss in speed (80% usually costs only a few % of FPS). Raise it for a little more performance if your card allows. The driver keeps it within safe limits, and Ember restores the default when it closes." />
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Right" FontWeight="SemiBold" Width="110" TextAlignment="Right"
+                       VerticalAlignment="Center" Text="{Binding TargetText}" />
+            <Slider Minimum="{Binding MinPercent}" Maximum="{Binding MaxPercent}" Value="{Binding Percent}"
+                    TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center" />
+          </DockPanel>
+          <TextBlock Classes="label" Text="{Binding RangeText}" />
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Classes="accent" Content="Apply" Command="{Binding ApplyCommand}" />
+            <Button Content="Reset to default" Command="{Binding ResetCommand}" />
+          </StackPanel>
+          <TextBlock Classes="label" TextWrapping="Wrap" IsVisible="{Binding !IsElevated}"
+                     Text="Changing the power limit needs admin: use &quot;Restart as admin&quot; in the sidebar, or turn on &quot;Start with admin rights&quot; in Settings." />
+          <TextBlock Classes="label" TextWrapping="Wrap" Text="{Binding Status}"
+                     IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        </StackPanel>
+      </Border>
+
+      <!-- Clear standby memory (Memory only) -->
+      <Border Classes="card" IsVisible="{Binding Cleanup, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <DockPanel DataContext="{Binding Cleanup}" x:DataType="vm:MemoryCleanupViewModel">
+          <Button DockPanel.Dock="Right" VerticalAlignment="Center" Content="Clear standby memory"
+                  IsEnabled="{Binding !IsBusy}" Command="{Binding ClearCommand}" />
+          <StackPanel Spacing="6" Margin="0,0,16,0">
+            <TextBlock Classes="eyebrow" Text="FREE UP MEMORY" />
+            <TextBlock Classes="label" TextWrapping="Wrap"
+                       Text="Drops the cache Windows keeps of recently used files. Safe to do anytime; it can smooth out stutters in games when RAM is nearly full. Needs admin." />
+            <TextBlock Classes="label" Text="{Binding StandbyText}"
+                       IsVisible="{Binding StandbyText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            <TextBlock TextWrapping="Wrap" Text="{Binding Status}"
+                       IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          </StackPanel>
+        </DockPanel>
+      </Border>
+
       <!-- Per-core (CPU only) -->
       <Border Classes="card" IsVisible="{Binding ShowCores}">
         <StackPanel Spacing="12">

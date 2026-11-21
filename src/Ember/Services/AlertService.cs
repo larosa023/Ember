@@ -19,6 +19,10 @@ public sealed class AlertService
     private readonly Action _openEmber;
     private readonly Watch _cpu = new("CPU");
     private readonly Watch _gpu = new("GPU");
+    private readonly Watch _ram = new("Memory");
+    private readonly Dictionary<string, DateTime> _diskAlerted = new();   // drive letter → last alert
+    private readonly HashSet<string> _diskArmed = new();
+    private int _diskTick;
     private ToastWindow? _toast;
 
     public AlertService(SettingsService settings, Action openEmber)
@@ -30,9 +34,56 @@ public sealed class AlertService
     public void Check(HardwareSnapshot s)
     {
         var cfg = _settings.Current;
-        if (!cfg.AlertsEnabled) return;
-        Evaluate(_cpu, s.CpuTemp, cfg.CpuAlertC, s.CpuName);
-        Evaluate(_gpu, s.GpuTemp, cfg.GpuAlertC, s.GpuName);
+        if (cfg.AlertsEnabled)
+        {
+            Evaluate(_cpu, s.CpuTemp, cfg.CpuAlertC, s.CpuName);
+            Evaluate(_gpu, s.GpuTemp, cfg.GpuAlertC, s.GpuName);
+        }
+        if (cfg.RamAlertEnabled) EvaluateRam(s, cfg.RamAlertPercent);
+        if (cfg.DiskAlertEnabled && _diskTick++ % 30 == 0) EvaluateDisks(s, cfg.DiskAlertFreePercent);
+    }
+
+    private void EvaluateRam(HardwareSnapshot s, double threshold)
+    {
+        if (s.RamLoad is not float load) return;
+        var now = DateTime.UtcNow;
+        if (load < threshold - Rearm) _ram.Armed = true;
+        if (load < threshold)
+        {
+            _ram.HotSince = null;
+            return;
+        }
+        _ram.HotSince ??= now;
+        if (!_ram.Armed || now - _ram.HotSince < Sustain || now - _ram.LastAlert < Cooldown) return;
+        _ram.Armed = false;
+        _ram.LastAlert = now;
+        Show("Memory is almost full",
+             $"{load:0}% of your RAM has been in use for over 10 seconds. Open Processes to see which apps are using it.",
+             hot: true);
+    }
+
+    /// <summary>Checked every 30 ticks: a drive below its free-space limit alerts once, then re-arms after it recovers.</summary>
+    private void EvaluateDisks(HardwareSnapshot s, double freePercent)
+    {
+        foreach (var v in s.Volumes)
+        {
+            if (v.Total <= 0) continue;
+            var free = v.Free * 100.0 / v.Total;
+            if (free > freePercent + 2)
+            {
+                _diskArmed.Add(v.Letter);
+                continue;
+            }
+            if (free > freePercent) continue;
+            var first = !_diskAlerted.ContainsKey(v.Letter);
+            if (!first && !_diskArmed.Contains(v.Letter)) continue;
+            _diskArmed.Remove(v.Letter);
+            _diskAlerted[v.Letter] = DateTime.UtcNow;
+            Show($"Drive {v.Letter} is nearly full",
+                 $"Only {Format.Bytes(v.Free)} ({free:0.#}%) left. Windows and games slow down when a drive gets this full.",
+                 hot: true);
+            return;   // one toast at a time
+        }
     }
 
     private void Evaluate(Watch w, float? reading, double threshold, string device)

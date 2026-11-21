@@ -27,10 +27,15 @@ public partial class MainWindowViewModel : ViewModelBase
         _settings = settings;
         _isSidebarCollapsed = settings.Current.SidebarCollapsed;
         Settings = new SettingsViewModel(settings, themes, updates, host, alerts, overlay, hotkeys);
+        Settings.DisplayOptionsChanged += () =>
+        {
+            Dashboard.ShowTopApps = settings.Current.DashboardTopApps;
+            UpdateSampling();
+        };
         Fans = new FansViewModel(settings, host);
         CpuDetail = new DetailViewModel(DetailKind.Cpu, () => CurrentPage = Dashboard);
-        GpuDetail = new DetailViewModel(DetailKind.Gpu, () => CurrentPage = Dashboard);
-        MemoryDetail = new DetailViewModel(DetailKind.Memory, () => CurrentPage = Dashboard);
+        GpuDetail = new DetailViewModel(DetailKind.Gpu, () => CurrentPage = Dashboard) { Tuning = new GpuTuningViewModel(settings) };
+        MemoryDetail = new DetailViewModel(DetailKind.Memory, () => CurrentPage = Dashboard) { Cleanup = new MemoryCleanupViewModel() };
         StorageDetail = new StorageViewModel(() => CurrentPage = Dashboard);
         NetworkDetail = new NetworkViewModel(() => CurrentPage = Dashboard);
         Dashboard.OpenRequested += page => CurrentPage = page switch
@@ -39,9 +44,13 @@ public partial class MainWindowViewModel : ViewModelBase
             "ram" => MemoryDetail,
             "storage" => StorageDetail,
             "network" => NetworkDetail,
+            "processes" => Processes,
             _ => CpuDetail,
         };
         _currentPage = Dashboard;
+        Dashboard.ShowTopApps = settings.Current.DashboardTopApps;
+        Dashboard.PowerPlan.Refresh();
+        UpdateSampling();
         _host.Tick += OnTick;
     }
 
@@ -134,17 +143,27 @@ public partial class MainWindowViewModel : ViewModelBase
 
         _lastSnapshot = snapshot;
 
-        // Only the page on screen is rebuilt each tick; hidden pages catch up when opened.
-        Dashboard.Update(snapshot);
-        CpuDetail.Update(snapshot, CurrentPage == CpuDetail);
-        GpuDetail.Update(snapshot, CurrentPage == GpuDetail);
-        MemoryDetail.Update(snapshot, CurrentPage == MemoryDetail);
+        // Graphs keep rolling every tick, but only the page on screen is rebuilt, and nothing at all
+        // while Ember is hidden in the tray. Pages catch up the moment they're shown.
+        var shown = _windowVisible;
+        Dashboard.Update(snapshot, shown && CurrentPage == Dashboard);
+        CpuDetail.Update(snapshot, shown && CurrentPage == CpuDetail);
+        GpuDetail.Update(snapshot, shown && CurrentPage == GpuDetail);
+        MemoryDetail.Update(snapshot, shown && CurrentPage == MemoryDetail);
+        if (!shown) return;
         UpdateVisiblePage(snapshot);
         Settings.UpdateGpuList(snapshot.GpuNames);
         if (processes is not null)
         {
-            Processes.SetNetworkAvailable(_host.ProcessNetworkAvailable);
-            Processes.Update(processes);
+            if (CurrentPage == Processes)
+            {
+                Processes.SetNetworkAvailable(_host.ProcessNetworkAvailable);
+                Processes.Update(processes);
+            }
+            else if (CurrentPage == Dashboard && Dashboard.ShowTopApps)
+            {
+                Dashboard.UpdateTopApps(processes);
+            }
         }
     }
 
@@ -223,31 +242,43 @@ public partial class MainWindowViewModel : ViewModelBase
         _ => "dashboard",
     };
 
-    private bool _windowVisible = true;
+    private bool _windowVisible = !Program.StartMinimized;   // set properly once the window exists
 
     /// <summary>Called when the window is hidden to the tray or shown again: no process sampling while hidden.</summary>
     public void SetWindowVisible(bool visible)
     {
+        if (_windowVisible == visible) return;
         _windowVisible = visible;
-        _host.SampleProcesses = visible && CurrentPage == Processes;
+        UpdateSampling();
+        if (visible) CatchUp();
     }
+
+    /// <summary>Show current numbers right away instead of waiting for the next tick.</summary>
+    private void CatchUp()
+    {
+        if (_lastSnapshot is not { } last) return;
+        if (CurrentPage is DetailViewModel detail) detail.Update(last, visible: true, record: false);
+        else if (CurrentPage == Dashboard) Dashboard.Publish(last);
+        else UpdateVisiblePage(last);
+    }
+
+    /// <summary>Processes are only sampled while the Processes page (or the dashboard's top apps) is on screen.</summary>
+    public void UpdateSampling() =>
+        _host.SampleProcesses = _windowVisible &&
+            (CurrentPage == Processes || (CurrentPage == Dashboard && Dashboard.ShowTopApps));
 
     partial void OnCurrentPageChanged(ViewModelBase value)
     {
         _settings.Current.LastPage = PageKey(value) ?? "dashboard";
-        // Only pay for process sampling while the Processes page is open.
-        _host.SampleProcesses = value == Processes && _windowVisible;
+        UpdateSampling();
+        if (value == Dashboard) Dashboard.PowerPlan.Refresh();
         if (value == Startup && Startup.Items.Count == 0) _ = Startup.Refresh();
         if (value == History) History.Refresh();
         if (value == Services && Services.Items.Count == 0) _ = Services.Refresh();
         if (value == Specs) _ = Specs.LoadAsync();
+        if (value == GpuDetail) _ = GpuDetail.Tuning!.LoadAsync();
 
-        // Show current numbers right away instead of waiting for the next tick.
-        if (_lastSnapshot is { } last)
-        {
-            if (value is DetailViewModel detail) detail.Update(last, visible: true);
-            else UpdateVisiblePage(last);
-        }
+        if (_windowVisible) CatchUp();
     }
 
     [RelayCommand]

@@ -23,6 +23,7 @@ public sealed class ProcessService : IDisposable
     private readonly Dictionary<int, Meta> _meta = new();
     private readonly Dictionary<string, (IImage? Icon, string? Description)> _byPath = new(StringComparer.OrdinalIgnoreCase);
     private readonly GpuProcessCounter _gpu = new();
+    private int _newPathBudget;
     private readonly NetworkMonitor _network = new();
 
     /// <summary>Set by the UI: only pay for these when their column is visible.</summary>
@@ -51,6 +52,7 @@ public sealed class ProcessService : IDisposable
         var elapsed = _lastTimestamp == 0 ? 0 : Stopwatch.GetElapsedTime(_lastTimestamp, now).TotalSeconds;
         var cores = Environment.ProcessorCount;
         _sampleCount++;
+        _newPathBudget = 25;   // icon + description lookups per sample; the rest fill in over the next seconds
 
         List<RawProcess> raw;
         try { raw = _table.Read(); }
@@ -98,6 +100,13 @@ public sealed class ProcessService : IDisposable
             _efficiency.Remove(pid);
         }
 
+        // Icons for exes that are long gone (installers, old versions) shouldn't pile up for days.
+        if (_byPath.Count > 600)
+        {
+            var live = _meta.Values.Select(m => m.Path).OfType<string>().ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var path in _byPath.Keys.Where(p => !live.Contains(p)).ToList()) _byPath.Remove(path);
+        }
+
         _last = counters;
         _lastTimestamp = now;
         return result;
@@ -133,8 +142,15 @@ public sealed class ProcessService : IDisposable
         string? description = null;
         if (path is not null)
         {
-            if (!_byPath.TryGetValue(path, out var cached))
+            if (!_byPath.TryGetValue(path, out var cached) && _newPathBudget <= 0)
             {
+                // Over this tick's budget: show the generic icon for now and look it up again next tick.
+                return new Meta(name, path, GenericIcon(), null,
+                    path.StartsWith(WindowsDir, StringComparison.OrdinalIgnoreCase));
+            }
+            if (!_byPath.ContainsKey(path))
+            {
+                _newPathBudget--;
                 try { cached.Icon = Native.ExtractIcon(path); } catch { }
                 try
                 {

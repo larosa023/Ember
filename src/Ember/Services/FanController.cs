@@ -34,7 +34,12 @@ public sealed class FanController
     public void SetConfigs(IEnumerable<FanConfig> configs)
     {
         var copy = new Dictionary<string, FanConfig>();
-        foreach (var c in configs) copy[c.Id] = c.Clone();
+        foreach (var c in configs)
+        {
+            var clone = c.Clone();
+            clone.Points.Sort((a, b) => a.Temp.CompareTo(b.Temp));   // sorted once here, not every tick
+            copy[c.Id] = clone;
+        }
         lock (_gate) _configs = copy;
     }
 
@@ -111,7 +116,7 @@ public sealed class FanController
         if (config.TempSource is null || !temps.TryGetValue(config.TempSource, out var reading) || reading is not float temp)
             return 100;
 
-        var points = config.Points.OrderBy(p => p.Temp).ToList();
+        var points = config.Points;   // pre-sorted in SetConfigs
         if (points.Count == 0) return 100;
         if (temp <= points[0].Temp) return points[0].Percent;
         if (temp >= points[^1].Temp) return points[^1].Percent;

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Avalonia.Media;
 using Ember.Models;
 
 namespace Ember.ViewModels;
@@ -63,6 +64,31 @@ public partial class DashboardViewModel : ViewModelBase
     [ObservableProperty] private double[] _netUpHistory = Array.Empty<double>();
     [ObservableProperty] private double _netMax = 1;
 
+    // ---------- Top apps + power plan ----------
+
+    public PowerPlanViewModel PowerPlan { get; } = new();
+
+    /// <summary>Five busiest apps (grouped by name like Task Manager), updated in place.</summary>
+    public ObservableCollection<TopApp> TopApps { get; } = new();
+
+    [ObservableProperty] private bool _showTopApps;
+
+    public void UpdateTopApps(IReadOnlyList<ProcessInfo> processes)
+    {
+        var top = processes
+            .GroupBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(g => (Name: g.First().Description is { Length: > 0 } d && g.First().HasWindow ? d : g.Key,
+                          Icon: g.Select(p => p.Icon).FirstOrDefault(i => i is not null),
+                          Cpu: g.Sum(p => p.Cpu), Memory: g.Sum(p => p.Memory)))
+            .OrderByDescending(a => a.Cpu).ThenByDescending(a => a.Memory)
+            .Take(5).ToList();
+
+        while (TopApps.Count < top.Count) TopApps.Add(new TopApp());
+        while (TopApps.Count > top.Count) TopApps.RemoveAt(TopApps.Count - 1);
+        for (int i = 0; i < top.Count; i++)
+            TopApps[i].Apply(top[i].Name, top[i].Icon, top[i].Cpu, top[i].Memory);
+    }
+
     private void UpdateStorageAndNetwork(HardwareSnapshot s)
     {
         foreach (var v in s.Volumes)
@@ -96,12 +122,28 @@ public partial class DashboardViewModel : ViewModelBase
         NetName = primary is null ? "No connection" : $"{primary.Kind} · {primary.Name}";
         NetDownText = primary is null ? Format.Dash : Format.NetRate(primary.DownBps);
         NetUpText = primary is null ? Format.Dash : Format.NetRate(primary.UpBps);
-        NetDownHistory = _downHistory.Push(primary?.DownBps ?? 0);
-        NetUpHistory = _upHistory.Push(primary?.UpBps ?? 0);
+        NetDownHistory = _downHistory.Snapshot();
+        NetUpHistory = _upHistory.Snapshot();
         NetMax = Math.Max(NetDownHistory.Concat(NetUpHistory).Max() * 1.15, 64 * 1024);
     }
 
-    public void Update(HardwareSnapshot s)
+    /// <summary>
+    /// Every tick: keep the 60-second graphs rolling (cheap, no allocations). Only when the dashboard
+    /// is actually on screen are the texts, gauges and graphs pushed to the UI.
+    /// </summary>
+    public void Update(HardwareSnapshot s, bool visible)
+    {
+        _cpuHistory.Add(s.CpuLoad ?? 0);
+        _gpuHistory.Add(s.GpuLoad ?? 0);
+        _ramHistory.Add(s.RamLoad ?? 0);
+        var primary = s.Network.FirstOrDefault(n => n.IsPrimary) ?? s.Network.FirstOrDefault();
+        _downHistory.Add(primary?.DownBps ?? 0);
+        _upHistory.Add(primary?.UpBps ?? 0);
+        if (visible) Publish(s);
+    }
+
+    /// <summary>Pushes the latest numbers to the screen (also used to catch up when the dashboard reappears).</summary>
+    public void Publish(HardwareSnapshot s)
     {
         CpuName = s.CpuName;
         CpuLoad = s.CpuLoad ?? 0;
@@ -109,7 +151,7 @@ public partial class DashboardViewModel : ViewModelBase
         CpuTempText = Format.Temp(s.CpuTemp);
         CpuClockText = Format.Clock(s.CpuClock);
         CpuPowerText = Format.Watts(s.CpuPower);
-        CpuHistoryValues = _cpuHistory.Push(s.CpuLoad ?? 0);
+        CpuHistoryValues = _cpuHistory.Snapshot();
 
         GpuName = s.GpuName;
         GpuLoad = s.GpuLoad ?? 0;
@@ -119,32 +161,33 @@ public partial class DashboardViewModel : ViewModelBase
         VramText = s.VramUsedMb is not float used ? Format.Dash
             : s.VramTotalMb is float total && total > 0 ? $"{used / 1024:0.0} / {total / 1024:0} GB"
             : $"{used / 1024:0.0} GB";
-        GpuHistoryValues = _gpuHistory.Push(s.GpuLoad ?? 0);
+        GpuHistoryValues = _gpuHistory.Snapshot();
 
         RamLoad = s.RamLoad ?? 0;
         RamLoadText = Format.Percent(s.RamLoad);
         RamUsedText = s.RamUsedGb is float u ? $"{u:0.0} GB" : Format.Dash;
         RamFreeText = s.RamFreeGb is float f ? $"{f:0.0} GB" : Format.Dash;
         RamTotalText = s.RamUsedGb is float u2 && s.RamFreeGb is float f2 ? $"{u2 + f2:0} GB installed" : "Memory";
-        RamHistoryValues = _ramHistory.Push(s.RamLoad ?? 0);
+        RamHistoryValues = _ramHistory.Snapshot();
 
         UpdateStorageAndNetwork(s);
 
         UptimeText = $"System up {Format.Uptime(TimeSpan.FromMilliseconds(Environment.TickCount64))}";
     }
 
-    /// <summary>Fixed-size rolling history; returns a fresh array so bindings redraw.</summary>
+    /// <summary>Fixed-size rolling history; Snapshot returns a fresh array so bindings redraw.</summary>
     private sealed class History
     {
         private readonly double[] _buffer;
         public History(int size) => _buffer = new double[size];
 
-        public double[] Push(double value)
+        public void Add(double value)
         {
             Array.Copy(_buffer, 1, _buffer, 0, _buffer.Length - 1);
             _buffer[^1] = value;
-            return (double[])_buffer.Clone();
         }
+
+        public double[] Snapshot() => (double[])_buffer.Clone();
     }
 }
 
@@ -170,5 +213,24 @@ public partial class VolumeRow : ObservableObject
         UsedText = $"{Format.Bytes(used)} of {Format.Bytes(v.Total)}";
         FreeText = $"{Format.Bytes(v.Free)} free";
         Detail = $"{v.Format} · {Percent:0}% used";
+    }
+}
+
+/// <summary>One row of the dashboard's top apps card.</summary>
+public partial class TopApp : ObservableObject
+{
+    [ObservableProperty] private string _name = "";
+    [ObservableProperty] private IImage? _icon;
+    [ObservableProperty] private double _cpu;
+    [ObservableProperty] private string _cpuText = "";
+    [ObservableProperty] private string _memoryText = "";
+
+    public void Apply(string name, IImage? icon, double cpu, long memory)
+    {
+        Name = name;
+        Icon = icon;
+        Cpu = Math.Min(cpu, 100);
+        CpuText = $"{cpu:0.0}%";
+        MemoryText = Format.ProcessMemory(memory);
     }
 }

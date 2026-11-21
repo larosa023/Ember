@@ -66,6 +66,39 @@ internal static class Pdh
         }
     }
 
+    public delegate void InstanceHandler(ReadOnlySpan<char> instance, double value);
+
+    /// <summary>
+    /// Like <see cref="ReadArray"/> but allocation-free: calls <paramref name="handler"/> for every instance
+    /// with a value above zero, passing the name as a span. <paramref name="buffer"/> is reused between calls.
+    /// </summary>
+    public static unsafe bool ForEachPositive(IntPtr counter, ref IntPtr buffer, ref int capacity, InstanceHandler handler)
+    {
+        if (counter == IntPtr.Zero) return false;
+        uint size = (uint)capacity;
+        uint count;
+        var status = PdhGetFormattedCounterArray(counter, FmtDouble | FmtNoCap100, ref size, out count, buffer);
+        if (status == MoreData || buffer == IntPtr.Zero)
+        {
+            if (buffer != IntPtr.Zero) Marshal.FreeHGlobal(buffer);
+            capacity = (int)Math.Max(size + size / 4, 64 * 1024);
+            buffer = Marshal.AllocHGlobal(capacity);
+            size = (uint)capacity;
+            status = PdhGetFormattedCounterArray(counter, FmtDouble | FmtNoCap100, ref size, out count, buffer);
+        }
+        if (status != 0) return false;
+
+        var items = (Item*)buffer;
+        for (int i = 0; i < count; i++)
+        {
+            ref var item = ref items[i];
+            if (item.CStatus != 0 || item.Value <= 0 || item.Name == IntPtr.Zero) continue;
+            var name = System.Runtime.InteropServices.MemoryMarshal.CreateReadOnlySpanFromNullTerminated((char*)item.Name);
+            handler(name, item.Value);
+        }
+        return true;
+    }
+
     public static void Close(ref IntPtr query)
     {
         if (query == IntPtr.Zero) return;

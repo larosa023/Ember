@@ -112,6 +112,8 @@ internal sealed class NetworkMonitor : IDisposable
         }
     }
 
+    private static unsafe Guid ReadGuid(IntPtr p) => System.Runtime.CompilerServices.Unsafe.ReadUnaligned<Guid>((void*)p);
+
     private void OnEvent(IntPtr record)
     {
         try
@@ -121,7 +123,7 @@ internal sealed class NetworkMonitor : IDisposable
             var send = SendIds.Contains(id);
             if (!send && !RecvIds.Contains(id)) return;
             if ((ushort)Marshal.ReadInt16(record, 86) < 8) return;
-            if (Marshal.PtrToStructure<Guid>(record + 24) != KernelNetwork) return;
+            if (ReadGuid(record + 24) != KernelNetwork) return;
 
             var data = Marshal.ReadIntPtr(record, 96);
             if (data == IntPtr.Zero) return;

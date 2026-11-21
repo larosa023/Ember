@@ -187,10 +187,19 @@ public partial class SensorRow : ObservableObject
     [ObservableProperty] private string _min = Format.Dash;
     [ObservableProperty] private string _max = Format.Dash;
 
+    private float? _v, _min, _max;
+    private bool _formatted;
+    private (bool, string, string, string) _units;
+
+    /// <summary>Only re-formats the numbers that actually changed.</summary>
     public void Apply(SensorReading r)
     {
-        Value = Format.Sensor(r.Type, r.Value);
-        Min = Format.Sensor(r.Type, r.Min);
-        Max = Format.Sensor(r.Type, r.Max);
+        var units = (Format.UseFahrenheit, Format.NetUnit, Format.DiskUnit, Format.MemoryUnit);
+        var unitChanged = units != _units;
+        _units = units;
+        if (!_formatted || unitChanged || r.Value != _v) Value = Format.Sensor(r.Type, _v = r.Value);
+        if (!_formatted || unitChanged || r.Min != _min) Min = Format.Sensor(r.Type, _min = r.Min);
+        if (!_formatted || unitChanged || r.Max != _max) Max = Format.Sensor(r.Type, _max = r.Max);
+        _formatted = true;
     }
 }

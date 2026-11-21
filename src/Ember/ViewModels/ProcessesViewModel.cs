@@ -29,6 +29,7 @@ public partial class ProcessesViewModel : ViewModelBase
     private readonly SectionRow[] _sections;
     private IReadOnlyList<ProcessInfo> _last = Array.Empty<ProcessInfo>();
     private bool _descending = true;
+    private string? _memoryUnit;
 
     public ProcessesViewModel()
     {
@@ -151,9 +152,13 @@ public partial class ProcessesViewModel : ViewModelBase
     {
         _last = list;
         // Stay in sync if the unit was changed on the Settings page.
-        OnPropertyChanged(nameof(MemoryAuto));
-        OnPropertyChanged(nameof(MemoryMb));
-        OnPropertyChanged(nameof(MemoryGb));
+        if (_memoryUnit != Format.MemoryUnit)
+        {
+            _memoryUnit = Format.MemoryUnit;
+            OnPropertyChanged(nameof(MemoryAuto));
+            OnPropertyChanged(nameof(MemoryMb));
+            OnPropertyChanged(nameof(MemoryGb));
+        }
         var query = Search.Trim();
 
         // 1. Bucket processes by exe (or name when the path is hidden).
@@ -211,13 +216,16 @@ public partial class ProcessesViewModel : ViewModelBase
             desired.Add(section);
             if (section.IsCollapsed && query.Length == 0) continue;
 
+            // Text is only formatted for rows that are actually in the list.
             foreach (var g in groups)
             {
+                g.FormatTexts();
                 desired.Add(g);
                 if (g.IsExpanded && g.Count > 1)
                 {
                     var kids = g.Children.ToList();
                     kids.Sort(CompareRows);
+                    foreach (var k in kids) k.FormatTexts();
                     desired.AddRange(kids);
                 }
             }
@@ -276,10 +284,24 @@ public partial class ProcessesViewModel : ViewModelBase
     /// <summary>Reorders the visible list in place (Move, not Reset) so selection and scroll survive.</summary>
     private void Sync(List<object> desired)
     {
+        // Most ticks nothing moved: don't touch the list at all.
+        if (Rows.Count == desired.Count)
+        {
+            bool same = true;
+            for (int i = 0; i < desired.Count && same; i++) same = ReferenceEquals(Rows[i], desired[i]);
+            if (same) return;
+        }
+
+        var wanted = new HashSet<object>(desired, ReferenceEqualityComparer.Instance);
+        for (int i = Rows.Count - 1; i >= 0; i--)
+            if (!wanted.Contains(Rows[i])) Rows.RemoveAt(i);
+
         for (int i = 0; i < desired.Count; i++)
         {
             if (i < Rows.Count && ReferenceEquals(Rows[i], desired[i])) continue;
-            var j = Rows.IndexOf(desired[i]);
+            int j = -1;
+            for (int k = i + 1; k < Rows.Count; k++)
+                if (ReferenceEquals(Rows[k], desired[i])) { j = k; break; }
             if (j >= 0) Rows.Move(j, i);
             else Rows.Insert(i, desired[i]);
         }
@@ -588,21 +610,40 @@ public partial class ProcessGroup : ObservableObject
         Name = first.Description ?? first.Name;
         Icon = first.Icon;
         Count = procs.Count;
-        CountText = procs.Count > 1 ? $"({procs.Count})" : "";
-        PidText = procs.Count == 1 ? first.Pid.ToString() : "";
 
-        Cpu = Math.Min(procs.Sum(p => p.Cpu), 100);
-        Memory = procs.Sum(p => p.Memory);
+        // One pass for every total (this runs for ~150 groups every second).
+        double cpu = 0, gpu = 0, disk = 0, net = 0;
+        long memory = 0;
+        bool netUnknown = false, efficient = false, suspended = true;
+        foreach (var p in procs)
+        {
+            cpu += p.Cpu;
+            gpu += p.Gpu;
+            disk += p.Disk;
+            memory += p.Memory;
+            if (double.IsNaN(p.Net)) netUnknown = true; else net += p.Net;
+            efficient |= p.IsEfficient;
+            suspended &= p.IsSuspended;
+        }
+        Cpu = Math.Min(cpu, 100);
+        Gpu = Math.Min(gpu, 100);
+        Memory = memory;
+        Disk = disk;
+        Net = netUnknown ? double.NaN : net;
+        IsEfficient = efficient;
+        IsSuspended = suspended;
+    }
+
+    /// <summary>Builds the display strings; only called while this group is visible in the list.</summary>
+    public void FormatTexts()
+    {
+        CountText = Count > 1 ? $"({Count})" : "";
+        PidText = Count == 1 ? FirstPid.ToString() : "";
         CpuText = Cpu < 0.05 ? "0%" : $"{Cpu:0.0}%";
-        Gpu = Math.Min(procs.Sum(p => p.Gpu), 100);
         GpuText = Gpu < 0.05 ? "0%" : $"{Gpu:0.0}%";
         MemoryText = Format.ProcessMemory(Memory);
-        Disk = procs.Sum(p => p.Disk);
         DiskText = Format.DiskRate(Disk);
-        Net = procs.Any(p => double.IsNaN(p.Net)) ? double.NaN : procs.Sum(p => p.Net);
         NetText = Format.ProcessNet(Net);
-        IsEfficient = procs.Any(p => p.IsEfficient);
-        IsSuspended = procs.All(p => p.IsSuspended);
     }
 }
 
@@ -640,15 +681,20 @@ public partial class ProcessRow : ObservableObject
         Path = info.Path;
         Cpu = info.Cpu;
         Memory = info.Memory;
-        CpuText = info.Cpu < 0.05 ? "0%" : $"{info.Cpu:0.0}%";
         Gpu = info.Gpu;
-        GpuText = info.Gpu < 0.05 ? "0%" : $"{info.Gpu:0.0}%";
-        MemoryText = Format.ProcessMemory(info.Memory);
         Disk = info.Disk;
-        DiskText = Format.DiskRate(info.Disk);
         Net = info.Net;
-        NetText = Format.ProcessNet(info.Net);
         IsEfficient = info.IsEfficient;
         IsSuspended = info.IsSuspended;
+    }
+
+    /// <summary>Builds the display strings; only called while this row is visible (group expanded).</summary>
+    public void FormatTexts()
+    {
+        CpuText = Cpu < 0.05 ? "0%" : $"{Cpu:0.0}%";
+        GpuText = Gpu < 0.05 ? "0%" : $"{Gpu:0.0}%";
+        MemoryText = Format.ProcessMemory(Memory);
+        DiskText = Format.DiskRate(Disk);
+        NetText = Format.ProcessNet(Net);
     }
 }

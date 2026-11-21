@@ -64,6 +64,15 @@
               </StackPanel>
             </DockPanel>
           </Border>
+          <Border Classes="row">
+            <DockPanel>
+              <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding DashboardTopApps}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Top apps on the dashboard" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="The five busiest apps right now. Turn off to save a little CPU while the dashboard is open." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
         </StackPanel>
       </Border>
 
@@ -226,6 +235,42 @@
                          Text="Modern CPUs can run up to 95–100°C under load by design; most GPUs are happiest below 85°C." />
             </DockPanel>
           </Border>
+          <Border Classes="row">
+            <DockPanel>
+              <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding RamAlertEnabled}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Memory alert" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="A pop-up when RAM stays nearly full for 10 seconds." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
+          <Border Classes="row" IsEnabled="{Binding RamAlertEnabled}">
+            <DockPanel>
+              <TextBlock DockPanel.Dock="Right" Classes="stat" Width="56" TextAlignment="Right" VerticalAlignment="Center"
+                         Text="{Binding RamAlertText}" />
+              <Slider DockPanel.Dock="Right" Width="220" Minimum="70" Maximum="98" TickFrequency="1"
+                      IsSnapToTickEnabled="True" Value="{Binding RamAlert}" VerticalAlignment="Center" />
+              <TextBlock Text="Memory limit" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </DockPanel>
+          </Border>
+          <Border Classes="row">
+            <DockPanel>
+              <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding DiskAlertEnabled}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Low disk space alert" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="A pop-up when a drive's free space drops below the limit." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
+          <Border Classes="row" IsEnabled="{Binding DiskAlertEnabled}">
+            <DockPanel>
+              <TextBlock DockPanel.Dock="Right" Classes="stat" Width="56" TextAlignment="Right" VerticalAlignment="Center"
+                         Text="{Binding DiskAlertText}" />
+              <Slider DockPanel.Dock="Right" Width="220" Minimum="1" Maximum="20" TickFrequency="1"
+                      IsSnapToTickEnabled="True" Value="{Binding DiskAlert}" VerticalAlignment="Center" />
+              <TextBlock Text="Free space under" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </DockPanel>
+          </Border>
         </StackPanel>
       </Border>
 
@@ -260,6 +305,16 @@
       <TextBlock Classes="eyebrow" Text="STARTUP &amp; TRAY" Margin="4,16,4,0" />
       <Border Classes="card" Padding="20,2">
         <StackPanel>
+          <Border Classes="row">
+            <DockPanel>
+              <ComboBox DockPanel.Dock="Right" Width="220" VerticalAlignment="Center"
+                        ItemsSource="{Binding TrayIconModes}" SelectedItem="{Binding SelectedTrayIcon}" />
+              <StackPanel Spacing="2" Margin="0,0,16,0">
+                <TextBlock Text="Tray icon shows" FontWeight="SemiBold" />
+                <TextBlock Classes="label" TextWrapping="Wrap" Text="Show a live number right in the taskbar corner instead of the logo." />
+              </StackPanel>
+            </DockPanel>
+          </Border>
           <Border Classes="row">
             <DockPanel>
               <ToggleSwitch DockPanel.Dock="Right" OnContent="" OffContent="" IsChecked="{Binding LaunchAtStartup}" />

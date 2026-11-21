@@ -19,6 +19,8 @@ public partial class App : Application
     private MainWindowViewModel? _vm;
     private MainWindow? _window;
     private TrayIcon? _tray;
+    private readonly TrayIconRenderer _trayIcons = new();
+    private int _trayTick;
     private OverlayController? _overlay;
     private HotkeyService? _hotkeys;
     private NativeMenuItem? _overlayMenuItem;
@@ -81,6 +83,9 @@ public partial class App : Application
             _host.Tick += UpdateTrayTooltip;
             _host.Tick += (snapshot, _) => alerts.Check(snapshot);
             _host.Tick += (snapshot, _) => _overlay.Update(snapshot);
+            _vm.Settings.DisplayOptionsChanged += _trayIcons.Invalidate;
+            var savedSettings = _settings;
+            if (!Program.SmokeTest) _ = Task.Run(() => GpuPower.ApplySaved(savedSettings));
 
             _hotkeys.Pressed += OnHotkey;
             if (!Program.SmokeTest) _hotkeys.Apply(_settings.Current.Hotkeys);
@@ -199,11 +204,8 @@ public partial class App : Application
 
         window.PropertyChanged += (_, e) =>
         {
-            if (e.Property == Visual.IsVisibleProperty)
-            {
-                _vm?.SetWindowVisible(window.IsVisible);
-                return;
-            }
+            if (e.Property == Visual.IsVisibleProperty || e.Property == Window.WindowStateProperty)
+                _vm?.SetWindowVisible(window.IsVisible && window.WindowState != WindowState.Minimized);
             if (e.Property != Window.WindowStateProperty) return;
             if (window.WindowState == WindowState.Minimized)
             {
@@ -288,6 +290,7 @@ public partial class App : Application
         var menu = new NativeMenu();
         menu.Items.Add(open);
         menu.Items.Add(_overlayMenuItem);
+        menu.Items.Add(PowerPlanMenu());
         menu.Items.Add(new NativeMenuItemSeparator());
         menu.Items.Add(quit);
 
@@ -302,7 +305,7 @@ public partial class App : Application
 
         _tray = new TrayIcon
         {
-            Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://Ember/Assets/ember.ico"))),
+            Icon = _trayIcons.Logo,
             ToolTipText = "Ember",
             Menu = menu,
             IsVisible = true,
@@ -310,6 +313,34 @@ public partial class App : Application
         _tray.Clicked += (_, _) => ShowWindow();
 
         TrayIcon.SetIcons(this, new TrayIcons { _tray });
+    }
+
+    /// <summary>Tray submenu listing Windows power plans; rebuilt each time it opens so it's never stale.</summary>
+    private static NativeMenuItem PowerPlanMenu()
+    {
+        var sub = new NativeMenu();
+        var item = new NativeMenuItem("Power plan") { Menu = sub };
+
+        void Rebuild()
+        {
+            sub.Items.Clear();
+            var active = PowerPlans.Active();
+            foreach (var plan in PowerPlans.List())
+            {
+                var entry = new NativeMenuItem(plan.Name)
+                {
+                    ToggleType = NativeMenuItemToggleType.Radio,
+                    IsChecked = plan.Id == active,
+                };
+                entry.Click += (_, _) => PowerPlans.SetActive(plan.Id);
+                sub.Items.Add(entry);
+            }
+            if (sub.Items.Count == 0) sub.Items.Add(new NativeMenuItem("Not available") { IsEnabled = false });
+        }
+
+        Rebuild();
+        sub.NeedsUpdate += (_, _) => Rebuild();
+        return item;
     }
 
     private void OnHotkey(string action)
@@ -332,6 +363,16 @@ public partial class App : Application
     private void UpdateTrayTooltip(HardwareSnapshot s, IReadOnlyList<ProcessInfo>? _)
     {
         if (_tray is null) return;
+
+        // Live number in the tray (only redrawn when it changes).
+        try
+        {
+            if (_trayIcons.Next(_settings?.Current.TrayIconMode ?? "logo", s) is { } icon) _tray.Icon = icon;
+        }
+        catch (Exception ex) { CrashLog.Write(ex); }
+
+        // Each tooltip change is a call into Explorer: every 3rd tick is plenty.
+        if (_trayTick++ % 3 != 0) return;
         // Windows caps tray tooltips at ~127 characters.
         var text = $"Ember\nCPU {Format.Percent(s.CpuLoad)} · {Format.Temp(s.CpuTemp)}\nGPU {Format.Percent(s.GpuLoad)} · {Format.Temp(s.GpuTemp)}";
         _tray.ToolTipText = text.Length > 127 ? text[..127] : text;

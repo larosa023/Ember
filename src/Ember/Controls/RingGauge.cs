@@ -37,6 +37,19 @@ public class RingGauge : Control
     private const double StartAngle = 135;
     private const double SweepAngle = 270;
 
+    // Cached between frames: the track never changes unless size/brush does, and pens are reused.
+    private Pen? _trackPen, _fillPen;
+    private StreamGeometry? _trackGeometry;
+    private Size _trackSize;
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == TrackBrushProperty || change.Property == StrokeThicknessProperty) _trackPen = null;
+        if (change.Property == FillBrushProperty || change.Property == StrokeThicknessProperty) _fillPen = null;
+        if (change.Property == StrokeThicknessProperty || change.Property == BoundsProperty) _trackGeometry = null;
+    }
+
     public override void Render(DrawingContext context)
     {
         var size = Math.Min(Bounds.Width, Bounds.Height);
@@ -47,14 +60,25 @@ public class RingGauge : Control
         var center = new Point(Bounds.Width / 2, Bounds.Height / 2);
 
         if (TrackBrush is { } track)
-            DrawArc(context, center, radius, StartAngle, SweepAngle, new Pen(track, t, lineCap: PenLineCap.Round));
+        {
+            _trackPen ??= new Pen(track, t, lineCap: PenLineCap.Round);
+            if (_trackGeometry is null || _trackSize != Bounds.Size)
+            {
+                _trackGeometry = Arc(center, radius, StartAngle, SweepAngle);
+                _trackSize = Bounds.Size;
+            }
+            context.DrawGeometry(null, _trackPen, _trackGeometry);
+        }
 
         var fraction = Maximum <= 0 ? 0 : Math.Clamp(Value / Maximum, 0, 1);
         if (fraction > 0.002 && FillBrush is { } fill)
-            DrawArc(context, center, radius, StartAngle, SweepAngle * fraction, new Pen(fill, t, lineCap: PenLineCap.Round));
+        {
+            _fillPen ??= new Pen(fill, t, lineCap: PenLineCap.Round);
+            context.DrawGeometry(null, _fillPen, Arc(center, radius, StartAngle, SweepAngle * fraction));
+        }
     }
 
-    private static void DrawArc(DrawingContext ctx, Point c, double r, double startDeg, double sweepDeg, IPen pen)
+    private static StreamGeometry Arc(Point c, double r, double startDeg, double sweepDeg)
     {
         var geometry = new StreamGeometry();
         using (var g = geometry.Open())
@@ -63,7 +87,7 @@ public class RingGauge : Control
             g.ArcTo(OnCircle(c, r, startDeg + sweepDeg), new Size(r, r), 0, sweepDeg > 180, SweepDirection.Clockwise);
             g.EndFigure(false);
         }
-        ctx.DrawGeometry(null, pen, geometry);
+        return geometry;
     }
 
     private static Point OnCircle(Point c, double r, double deg)

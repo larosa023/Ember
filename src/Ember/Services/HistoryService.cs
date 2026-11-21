@@ -80,7 +80,9 @@ public sealed class HistoryService : IDisposable
         lock (_gate)
         {
             _samples.Add(sample);
+            // Trim in batches (every ~10 minutes) instead of shifting ~17,000 readings every 5 seconds.
             var cutoff = now - Keep;
+            if (_samples.Count > 0 && _samples[0].Time >= cutoff - TimeSpan.FromMinutes(10)) cutoff = DateTime.MinValue;
             var drop = 0;
             while (drop < _samples.Count && _samples[drop].Time < cutoff) drop++;
             if (drop > 0) _samples.RemoveRange(0, drop);
